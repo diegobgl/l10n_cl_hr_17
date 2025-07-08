@@ -1,0 +1,41 @@
+<odoo>
+    <record id="view_hr_contribution_register_form" model="ir.ui.view">
+        <field name="name">hr.contribution.register.form</field>
+        <field name="model">hr.contribution.register</field>
+        <field name="arch" type="xml">
+            <form string="Entidad Previsional">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="partner_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_hr_contribution_register_tree" model="ir.ui.view">
+        <field name="name">hr.contribution.register.tree</field>
+        <field name="model">hr.contribution.register</field>
+        <field name="arch" type="xml">
+            <tree string="Entidades Previsionales">
+                <field name="name"/>
+                <field name="partner_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_hr_contribution_register" model="ir.actions.act_window">
+        <field name="name">Entidades Previsionales</field>
+        <field name="res_model">hr.contribution.register</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_l10n_cl_hr_root" name="Remuneraciones CL" sequence="100"/>
+    <menuitem id="menu_hr_contribution_register"
+            name="Entidades Previsionales"
+            parent="menu_l10n_cl_hr_root"
+            action="action_hr_contribution_register"/>
+
+
+</odoo>

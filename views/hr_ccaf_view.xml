@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista formulario CCAF -->
+    <record id="view_hr_ccaf_form" model="ir.ui.view">
+        <field name="name">hr.ccaf.form</field>
+        <field name="model">hr.ccaf</field>
+        <field name="arch" type="xml">
+            <form string="Caja de Compensación (CCAF)">
+                <sheet>
+                    <h2>
+                        <field name="name"/>
+                    </h2>
+                    <group>
+                        <group>
+                            <field name="codigo" string="Código"/>
+                        </group>
+                        <group>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol CCAF -->
+    <record id="view_hr_ccaf_tree" model="ir.ui.view">
+        <field name="name">hr.ccaf.tree</field>
+        <field name="model">hr.ccaf</field>
+        <field name="arch" type="xml">
+            <tree string="Cajas de Compensación">
+                <field name="name"/>
+                <field name="codigo"/>
+            </tree>
+        </field>
+    </record>
+</odoo>

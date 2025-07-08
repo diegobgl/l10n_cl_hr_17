@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Herencia del formulario de liquidación -->
+        <record model="ir.ui.view" id="view_hr_payslip_form_chile">
+            <field name="name">hr.payslip.form.chile</field>
+            <field name="model">hr.payslip</field>
+            <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+            <field name="arch" type="xml">
+
+                <!-- Agregar campo credit_note para evitar errores en modifiers -->
+                <field name="paid" position="after">
+                    <field name="credit_note" invisible="1"/>
+                    <field name="indicadores_id" required="1"/>
+                </field>
+
+                <!-- Reemplazo visible de credit_note por campos personalizados -->
+                <field name="credit_note" position="replace">
+                    <field name="movimientos_personal" string="Código Movimiento"/>
+                    <field name="date_start_mp" string="Inicio MP" invisible="movimientos_personal == '0'"/>
+                    <field name="date_end_mp" string="Fin MP" invisible="movimientos_personal == '0'"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Herencia del tree para líneas de la liquidación -->
+        <record id="view_hr_payslip_line_tree_chile" model="ir.ui.view">
+            <field name="name">hr.payslip.line.tree.chile</field>
+            <field name="model">hr.payslip.line</field>
+            <field name="inherit_id" ref="hr_payroll.view_hr_payslip_line_tree"/>
+            <field name="arch" type="xml">
+                <field name="rate" position="replace">
+                   <field name="rate" invisible="1"/>
+                </field>
+            </field>
+        </record>
+    </data>
+</odoo>

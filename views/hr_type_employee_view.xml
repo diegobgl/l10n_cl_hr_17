@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Formulario Tipo de Empleado -->
+    <record id="view_hr_type_employee_form" model="ir.ui.view">
+        <field name="name">hr.type.employee.form</field>
+        <field name="model">hr.type.employee</field>
+        <field name="arch" type="xml">
+            <form string="Tipo de Empleado">
+                <sheet>
+                    <h2>
+                        <field name="name"/>
+                    </h2>
+                    <group>
+                     <field name="id_type" placeholder="Código (opcional)"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol Tipo de Empleado -->
+    <record id="view_hr_type_employee_tree" model="ir.ui.view">
+        <field name="name">hr.type.employee.tree</field>
+        <field name="model">hr.type.employee</field>
+        <field name="arch" type="xml">
+            <tree string="Tipos de Empleado">
+                <field name="name"/>
+                <!-- Otros campos si los tienes -->
+            </tree>
+        </field>
+    </record>
+
+    <!-- Acción Tipo de Empleado -->
+    <record id="action_hr_type_employee" model="ir.actions.act_window">
+        <field name="name">Tipos de Empleado</field>
+        <field name="res_model">hr.type.employee</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_hr_type_employee_tree"/>
+    </record>
+
+    <!-- Menú Tipo de Empleado -->
+    <menuitem id="menu_hr_type_employee" name="Tipos de Empleado"
+        parent="menu_cl_hr_payroll_configuration"
+        action="action_hr_type_employee" sequence="80"/>
+</odoo>

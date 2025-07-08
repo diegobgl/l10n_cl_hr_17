@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Form View -->
+        <record id="hr_apv_form_view" model="ir.ui.view">
+            <field name="name">hr.apv.form</field>
+            <field name="model">hr.apv</field>
+            <field name="arch" type="xml">
+                <form string="Institución APV">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name" string="Nombre Institución APV"/>
+                            <h1>
+                                <field name="name" placeholder="e.g., Metlife"/>
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="codigo"/>
+                            </group>
+                            <group>
+                                <!-- Add other fields if any -->
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Tree View -->
+        <record id="hr_apv_tree_view" model="ir.ui.view">
+            <field name="name">hr.apv.tree</field>
+            <field name="model">hr.apv</field>
+            <field name="arch" type="xml">
+                <tree string="Instituciones APV">
+                    <field name="codigo"/>
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Action Window -->
+        <record id="hr_apv_action" model="ir.actions.act_window">
+            <field name="name">Instituciones Autorizadas APV</field>
+            <field name="res_model">hr.apv</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Menu Item (Add this line inside the existing hr_indicadores_previsionales_view.xml or menu_root.xml) -->
+        <!-- Example placement within hr_indicadores_previsionales_view.xml -->
+        <!-- <menuitem id="hr_apv_menu"
+            parent="menu_cl_hr_payroll_configuration" action="hr_apv_action"
+            sequence="15"/> -->
+        <!-- Or add directly in menu_root.xml under the config menu -->
+
+    </data>
+</odoo>

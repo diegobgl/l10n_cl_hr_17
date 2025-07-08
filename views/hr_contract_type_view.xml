@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista formulario Tipo de Contrato -->
+    <record id="view_hr_contract_type_form" model="ir.ui.view">
+        <field name="name">hr.contract.type.form</field>
+        <field name="model">hr.contract.type</field>
+        <field name="arch" type="xml">
+            <form string="Tipo de Contrato">
+                <sheet>
+                    <h2>
+                        <field name="name"/>
+                    </h2>
+                    <group>
+                        <field name="code" string="Código"/>
+                        <!-- Agrega aquí cualquier otro campo relevante -->
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol Tipo de Contrato -->
+    <record id="view_hr_contract_type_tree" model="ir.ui.view">
+        <field name="name">hr.contract.type.tree</field>
+        <field name="model">hr.contract.type</field>
+        <field name="arch" type="xml">
+            <tree string="Tipos de Contrato">
+                <field name="name"/>
+                <field name="code"/>
+                <!-- Otros campos si los tienes -->
+            </tree>
+        </field>
+    </record>
+
+    <!-- Acción para gestionar Tipos de Contrato -->
+    <record id="action_hr_contract_type" model="ir.actions.act_window">
+        <field name="name">Tipos de Contrato</field>
+        <field name="res_model">hr.contract.type</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_hr_contract_type_tree"/>
+    </record>
+
+    <!-- Menú para Tipos de Contrato -->
+    <menuitem id="menu_hr_contract_type" name="Tipos de Contrato"
+        parent="menu_cl_hr_payroll_configuration" action="action_hr_contract_type" sequence="40"/>
+</odoo>

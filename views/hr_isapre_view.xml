@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista formulario ISAPRE -->
+    <record id="view_hr_isapre_form" model="ir.ui.view">
+        <field name="name">hr.isapre.form</field>
+        <field name="model">hr.isapre</field>
+        <field name="arch" type="xml">
+            <form string="ISAPRE">
+                <sheet>
+                    <h2>
+                        <field name="name"/>
+                    </h2>
+                    <group>
+                        <group>
+                            <field name="codigo" string="Código"/>
+                            <field name="rut" string="RUT"/>
+                        </group>
+                        <group>
+                            <field name="cotizacion_uf" string="Cotización UF"/>
+                            <!-- Agrega aquí cualquier otro campo relevante -->
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol ISAPRE -->
+    <record id="view_hr_isapre_tree" model="ir.ui.view">
+        <field name="name">hr.isapre.tree</field>
+        <field name="model">hr.isapre</field>
+        <field name="arch" type="xml">
+            <tree string="ISAPREs">
+                <field name="name"/>
+                <field name="codigo"/>
+                <field name="rut"/>
+                <field name="cotizacion_uf"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Acción ISAPRE -->
+    <record id="action_hr_isapre" model="ir.actions.act_window">
+        <field name="name">ISAPREs</field>
+        <field name="res_model">hr.isapre</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_hr_isapre_tree"/>
+    </record>
+
+    <!-- Menú ISAPRE -->
+    <menuitem id="menu_hr_isapre" name="ISAPREs" parent="menu_cl_hr_payroll_configuration"
+        action="action_hr_isapre" sequence="50"/>
+</odoo>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista formulario Seguro Complementario -->
+    <record id="view_hr_seguro_complementario_form" model="ir.ui.view">
+        <field name="name">hr.seguro.complementario.form</field>
+        <field name="model">hr.seguro.complementario</field>
+        <field name="arch" type="xml">
+            <form string="Seguro Complementario">
+                <sheet>
+                    <h2>
+                        <field name="name"/>
+                    </h2>
+                    <group>
+                        <group>
+                            <field name="codigo" string="Código"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol Seguro Complementario -->
+    <record id="view_hr_seguro_complementario_tree" model="ir.ui.view">
+        <field name="name">hr.seguro.complementario.tree</field>
+        <field name="model">hr.seguro.complementario</field>
+        <field name="arch" type="xml">
+            <tree string="Seguros Complementarios">
+                <field name="name"/>
+                <field name="codigo"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Acción -->
+    <record id="action_hr_seguro_complementario" model="ir.actions.act_window">
+        <field name="name">Seguros Complementarios</field>
+        <field name="res_model">hr.seguro.complementario</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p>
+                Define las entidades aseguradoras complementarias para su uso en los contratos de los empleados.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menú -->
+    <menuitem id="menu_seguro_complementario_root"
+            name="Seguros Complementarios"
+            parent="hr.menu_hr_root"
+            action="action_hr_seguro_complementario"/>
+
+</odoo>

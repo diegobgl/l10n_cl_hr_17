@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_contract_form_chile" model="ir.ui.view">
+        <field name="name">hr.contract.chile.form</field>
+        <field name="model">hr.contract</field>
+        <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Campos custom después del sueldo -->
+            <xpath expr="//div[@name='wage']" position="after">
+                <group>
+                    <field name="otros_imp" string="Otros Imponible" invisible="1"/>
+                    <field name="otro_no_imp" string="Otros No Imponible" invisible="1"/>
+                </group>
+                <group>
+                    <field name="colacion" string="Asig. de Colación"/>
+                    <field name="movilizacion" string="Asig. de Movilización"/>
+                    <field name="viatico_santiago" string="Asig. de Viático"/>
+                    <field name="anticipo_sueldo" string="Anticipo de Sueldo"/>
+                    <field name="gratificacion_legal" string="Gratificación Manual"/>
+                </group>
+            </xpath>
+
+            <!-- Diario de sueldos después de estructura -->
+            <xpath expr="//field[@name='structure_type_id']" position="after">
+                <field name="journal_id" string="Diario de Sueldos"/>
+            </xpath>
+
+            <!-- Página extra: Carga Familiar -->
+            <xpath expr="//page[@name='information']" position="after">
+                <page string="Carga Familiar" name="carga_familiar">
+                    <group>
+                        <field name="carga_familiar" string="Carga Simple"/>
+                        <field name="carga_familiar_maternal" string="Carga Maternal"/>
+                        <field name="carga_familiar_invalida" string="Carga Inválida"/>
+                    </group>
+                </page>
+
+                <!-- Página de Salud -->
+                <page string="Salud" name="health">
+                    <group>
+                        <field name="isapre_id" string="ISAPRE"/>
+                        <field name="isapre_moneda" string="Moneda" invisible="isapre_id == False"/>
+                        <field name="isapre_cotizacion_uf" string="Cotización UF" invisible="isapre_id == False"/>
+                        <field name="isapre_fun" string="FUN" invisible="isapre_id == False"/>
+                        <field name="isapre_cuenta_propia" string="Cuenta Propia" invisible="isapre_id == False"/>
+                        <field name="seguro_complementario_id" string="Seguro Complementario"/>
+                        <field name="seguro_complementario_moneda" string="Moneda"/>
+                        <field name="seguro_complementario" string="Cotización"/>
+                    </group>
+                </page>
+
+                <!-- Página de Fondos de Pensión -->
+                <page string="Fondos de Pensión" name="afp">
+                    <group>
+                        <field name="pension" string="¿Pensión?"/>
+                        <field name="sin_afp" string="Sin AFP"/>
+                        <field name="sin_afp_sis" string="Sin AFP SIS"/>
+                        <field name="afp_id" string="AFP" invisible="not pension"/>
+                        <field name="apv_id" string="Institución APV"/>
+                        <field name="aporte_voluntario_moneda" string="Moneda"/>
+                        <field name="aporte_voluntario" string="Aporte Voluntario"/>
+                        <field name="forma_pago_apv" string="Forma de Pago"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

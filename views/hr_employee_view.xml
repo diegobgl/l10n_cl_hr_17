@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_employee_form_chile" model="ir.ui.view">
+        <field name="name">hr.employee.form.chile</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Tipo de empleado antes del departamento -->
+            <xpath expr="//field[@name='department_id']" position="before">
+                <field name="type_id" required="1"/>
+            </xpath>
+
+            <!-- Ocultar campo name, usar nombres separados -->
+            <xpath expr="//field[@name='name']" position="attributes">
+                <attribute name="invisible">1</attribute>
+                <attribute name="no_label">1</attribute>
+                <attribute name="required">0</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='name']/.." position="after">
+                <label for="firstname" class="oe_edit_only"/>
+                <h1><field name="firstname" required="1"/></h1>
+                <label for="middle_name" class="oe_edit_only"/>
+                <h1><field name="middle_name"/></h1>
+                <label for="last_name" class="oe_edit_only"/>
+                <h1><field name="last_name" required="1"/></h1>
+                <label for="mothers_name" class="oe_edit_only"/>
+                <h1><field name="mothers_name"/></h1>
+            </xpath>
+
+            <!-- Resource calendar personalizado -->
+            <xpath expr="//field[@name='resource_calendar_id']" position="replace">
+                <field name="resource_calendar_id" select="hr_resource_monthly_cl"/>
+            </xpath>
+
+            <!-- Validaciones de identificación, país y género -->
+            <xpath expr="//field[@name='identification_id']" position="attributes">
+                <attribute name="required">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='country_id']" position="attributes">
+                <attribute name="required">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='gender']" position="attributes">
+                <attribute name="required">1</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

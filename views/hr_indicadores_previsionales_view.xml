@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_hr_indicadores_form" model="ir.ui.view">
+        <field name="name">hr.indicadores.form</field>
+        <field name="model">hr.indicadores</field>
+        <field name="arch" type="xml">
+            <form string="Indicadores Previsionales">
+                <header>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <a href="https://www.previred.com/web/previred/indicadores-previsionales"
+                           class="btn btn-primary" role="button" target="_blank">Ir a Previred</a>
+                    </div>
+                    <group>
+                     <button string="Validar" type="object" name="action_done"
+                            class="oe_highlight" 
+                               invisible="state != 'draft'"/>
+                        <button string="Volver a borrador" type="object" name="action_draft"
+                            invisible="state != 'done'"/>
+                     <button string="Actualizar" type="object" name="update_document"
+                            context="{'force_update':True}" invisible="state != 'draft'"/>
+                    <group string="Período">
+                            <field name="month"/>
+                            <field name="year"/>
+                        /group>
+                    </group>
+                    <notebook>
+                        <page string="Previred" name="previred">
+                            <group>
+                                <group string="UF y UTM">
+                                    <field name="uf"/>
+                                    <field name="utm"/>
+                                    <field name="uta"/>
+                                </group>
+                                <group string="Topes Imponibles">
+                                    <field name="tope_imponible_afp"/>
+                                    <field name="tope_imponible_ips"/>
+                                    <field name="tope_imponible_seguro_cesantia"/>
+                                </group>
+                                <group string="Asignación Familiar">
+                                    <field name="asignacion_familiar_monto_a"/>
+                                    <field name="asignacion_familiar_primer"/>
+                                    <field name="asignacion_familiar_monto_b"/>
+                                    <field name="asignacion_familiar_segundo"/>
+                                    <field name="asignacion_familiar_monto_c"/>
+                                    <field name="asignacion_familiar_tercer"/>
+                                </group>
+                                <group string="Rentas Mínimas">
+                                    <field name="sueldo_minimo"/>
+                                    <field name="sueldo_minimo_otro"/>
+                                </group>
+                                <group string="APV">
+                                    <field name="tope_anual_apv"/>
+                                    <field name="tope_mensual_apv"/>
+                                </group>
+                                <group string="Seguro Cesantía AFC">
+                                    <field name="contrato_plazo_fijo_empleador"/>
+                                    <field name="contrato_plazo_indefinido_empleador"/>
+                                    <field name="contrato_plazo_indefinido_trabajador"/>
+                                    <field name="contrato_plazo_indefinido_empleador_otro"/>
+                                </group>
+                                <group string="Depósito Convenido">
+                                    <field name="deposito_convenido"/>
+                                </group>
+                            </group>
+                            <group string="Tasas AFP">
+                                <field name="tasa_afp_capital"/>
+                                <field name="tasa_sis_capital"/>
+                                <field name="tasa_independiente_capital"/>
+                                <field name="tasa_afp_cuprum"/>
+                                <field name="tasa_sis_cuprum"/>
+                                <field name="tasa_independiente_cuprum"/>
+                                <field name="tasa_afp_habitat"/>
+                                <field name="tasa_sis_habitat"/>
+                                <field name="tasa_independiente_habitat"/>
+                                <field name="tasa_afp_planvital"/>
+                                <field name="tasa_sis_planvital"/>
+                                <field name="tasa_independiente_planvital"/>
+                                <field name="tasa_afp_provida"/>
+                                <field name="tasa_sis_provida"/>
+                                <field name="tasa_independiente_provida"/>
+                                <field name="tasa_afp_modelo"/>
+                                <field name="tasa_sis_modelo"/>
+                                <field name="tasa_independiente_modelo"/>
+                                <field name="tasa_afp_uno"/>
+                                <field name="tasa_sis_uno"/>
+                                <field name="tasa_independiente_uno"/>
+                            </group>
+                        </page>
+
+                        <page string="Instituciones Relacionadas">
+                            <group string="Cotizaciones y Seguridad">
+                                <field name="ccaf_id"/>
+                                <field name="caja_compensacion"/>
+                                <field name="fonasa"/>
+                                <field name="pensiones_ips"/>
+                                <field name="tope_imponible_salud"/>
+                                <field name="mutual_seguridad_bool"/>
+                                <field name="mutualidad_id" invisible="mutual_seguridad_bool == False"/>
+                                <field name="mutual_seguridad" invisible="mutual_seguridad_bool == False"/>
+                                <field name="isl" invisible="mutual_seguridad_bool == True"/>
+                            </group>
+                        </page>
+
+                        <page string="Otros Indicadores">
+                            <group string="INE">
+                                <field name="ipc"/>
+                            </group>
+                            <group>
+                                <field name="gratificacion_legal"/>
+                                <field name="pensiones_ips"/>
+                                <field name="tope_imponible_ips"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista árbol -->
+    <record id="view_hr_indicadores_tree" model="ir.ui.view">
+        <field name="name">hr.indicadores.tree</field>
+        <field name="model">hr.indicadores</field>
+        <field name="arch" type="xml">
+            <tree string="Indicadores Previsionales">
+                <field name="year"/>
+                <field name="month"/>
+                <field name="uf"/>
+                <field name="utm"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Acción -->
+    <record id="action_hr_indicadores" model="ir.actions.act_window">
+        <field name="name">Indicadores Previsionales</field>
+        <field name="res_model">hr.indicadores</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_hr_indicadores_tree"/>
+    </record>
+
+    <!-- Menú -->
+    <menuitem id="menu_hr_indicadores"
+              name="Indicadores Previsionales"
+              parent="menu_cl_hr_payroll_indicators"
+              action="action_hr_indicadores"
+              sequence="10"/>
+</odoo>
