@@ -75,21 +75,24 @@
         # 'report/report_payslip.xml',
 
         # Data - Load categories/types first, then records using them
-        # 'data/hr_salary_rule_category.xml',
-        # 'data/hr_type_employee.xml',
-        # 'data/hr_contract_type.xml',
-        # 'data/hr_holidays_status.xml',
+         #'data/hr_salary_rule_category.xml',
+         'data/hr_type_employee.xml',
+         'data/hr_contract_type.xml',
+         'data/hr_holidays_status.xml',
         # 'data/account_journal.xml',
         # 'data/hr_centros_costos.xml',
-        # 'data/resource_calendar_attendance.xml', # noupdate="1"
-        # 'data/partner.xml', # noupdate="1"
-        # 'data/l10n_cl_hr_afp.xml',
-        # 'data/l10n_cl_hr_apv.xml',
-        # 'data/l10n_cl_hr_ccaf.xml',
-        # 'data/l10n_cl_hr_isapre.xml',
-        # 'data/l10n_cl_hr_mutual.xml',
+         'data/resource_calendar_attendance.xml', # noupdate="1"
+        #'data/partner.xml', # noupdate="1"
+         'data/l10n_cl_hr_afp.xml',
+         'data/l10n_cl_hr_apv.xml',
+         'data/l10n_cl_hr_ccaf.xml',
+         'data/l10n_cl_hr_isapre.xml',
+         'data/l10n_cl_hr_mutual.xml',
         # 'data/l10n_cl_hr_indicadores.xml', # noupdate="1"
-        # 'data/l10n_cl_hr_payroll_data.xml', # Includes contribution registers and salary rules
+        'data/l10n_cl_hr_salary_rule_category.xml',  # Primero categorías
+        'data/l10n_cl_hr_structure_type.xml',        # Luego tipos de estructura
+        'data/l10n_cl_hr_structure_data.xml',        # Luego estructuras (sin category_id)
+        'data/l10n_cl_hr_rules_data.xml',            # Luego reglas (ya tienen struct_id)
 
         # Menus - Load last
     ],

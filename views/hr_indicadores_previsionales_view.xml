@@ -7,25 +7,26 @@
             <form string="Indicadores Previsionales">
                 <header>
                     <field name="state" widget="statusbar"/>
+                     <button string="Validar" type="object" name="action_done"
+                            class="oe_highlight" 
+                           />
+                    <button string="Volver a borrador" type="object" name="action_draft"
+                            />
+                    <!--button name="action_upload_previred_pdf" type="object"
+                            string="Cargar desde PDF" class="btn-primary"/-->
+                    <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <a href="https://www.previred.com/web/previred/indicadores-previsionales"
                            class="btn btn-primary" role="button" target="_blank">Ir a Previred</a>
                     </div>
-                    <group>
-                     <button string="Validar" type="object" name="action_done"
-                            class="oe_highlight" 
-                               invisible="state != 'draft'"/>
-                        <button string="Volver a borrador" type="object" name="action_draft"
-                            invisible="state != 'done'"/>
-                     <button string="Actualizar" type="object" name="update_document"
-                            context="{'force_update':True}" invisible="state != 'draft'"/>
                     <group string="Período">
                             <field name="month"/>
                             <field name="year"/>
-                        /group>
-                    </group>
+                            <field name="pdf_file" filename="pdf_filename"/>
+                            <button name="action_parse_pdf" type="object" string="Importar desde PDF" class="btn-primary"/>
+                        </group>
                     <notebook>
                         <page string="Previred" name="previred">
                             <group>

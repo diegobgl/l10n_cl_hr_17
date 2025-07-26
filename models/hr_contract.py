@@ -71,7 +71,7 @@ class HrContract(models.Model):
     viatico_santiago = fields.Float('Asig. Viático', digits='Payroll', help="Allowance for travel expenses", tracking=True)
     # Related fields - check if still needed or if base module provides similar functionality
     # complete_name = fields.Char(related='employee_id.firstname') # Consider using employee_id.name
-    # last_name = fields.Char(related='employee_id.last_name') # Consider using employee_id.name
+    last_name = fields.Char(related='employee_id.last_name') # Consider using employee_id.name
 
     gratificacion_legal = fields.Boolean('Calcular Gratificación Manualmente', help="Marcar si la gratificación se ingresará manualmente en la nómina en lugar de calcularla automáticamente.", tracking=True)
     isapre_moneda = fields.Selection(

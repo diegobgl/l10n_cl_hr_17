@@ -9,6 +9,11 @@ from datetime import datetime
 import logging
 import requests # Keep requests as a fallback or alternative if needed
 import re # For cleaning strings more robustly
+# import base64
+# import io
+# import re
+# from PyPDF2 import PdfReader
+
 
 _logger = logging.getLogger(__name__)
 
@@ -33,106 +38,122 @@ class HrIndicadores(models.Model): # Renamed class
         ('done', 'Validado'),
     ], string='Estado', readonly=True, default='draft', tracking=True)
 
-    month = fields.Selection(MONTH_LIST, string='Mes', required=True, readonly=True, states={'draft': [('readonly', False)]})
-    year = fields.Integer('Año', required=True, default=lambda self: datetime.now().year, readonly=True, states={'draft': [('readonly', False)]})
+    pdf_file = fields.Binary('Archivo PDF')
+    pdf_filename = fields.Char('Nombre del Archivo')
+
+
+    month = fields.Selection([
+        ('1', 'Enero'),
+        ('2', 'Febrero'),
+        ('3', 'Marzo'),
+        ('4', 'Abril'),
+        ('5', 'Mayo'),
+        ('6', 'Junio'),
+        ('7', 'Julio'),
+        ('8', 'Agosto'),
+        ('9', 'Septiembre'),
+        ('10', 'Octubre'),
+        ('11', 'Noviembre'),
+        ('12', 'Diciembre'),
+    ], string='Mes')
+    year = fields.Integer('Año', required=True, default=lambda self: datetime.now().year)
 
     # --- Fields Definition with Digits and Help Text ---
     # Asignación Familiar
-    asignacion_familiar_primer = fields.Float('Tope Tramo 1 AF', digits='Payroll', readonly=True, states={'draft': [('readonly', False)]}, help="Límite superior Renta Imponible para Tramo 1 Asig. Familiar ($)")
-    asignacion_familiar_segundo = fields.Float('Tope Tramo 2 AF', digits='Payroll', readonly=True, states={'draft': [('readonly', False)]}, help="Límite superior Renta Imponible para Tramo 2 Asig. Familiar ($)")
-    asignacion_familiar_tercer = fields.Float('Tope Tramo 3 AF', digits='Payroll', readonly=True, states={'draft': [('readonly', False)]}, help="Límite superior Renta Imponible para Tramo 3 Asig. Familiar ($)")
-    asignacion_familiar_monto_a = fields.Float('Monto Tramo 1 AF', digits='Payroll', readonly=True, states={'draft': [('readonly', False)]}, help="Monto Asignación Familiar por carga para Tramo 1 ($)")
-    asignacion_familiar_monto_b = fields.Float('Monto Tramo 2 AF', digits='Payroll', readonly=True, states={'draft': [('readonly', False)]}, help="Monto Asignación Familiar por carga para Tramo 2 ($)")
-    asignacion_familiar_monto_c = fields.Float('Monto Tramo 3 AF', digits='Payroll', readonly=True, states={'draft': [('readonly', False)]}, help="Monto Asignación Familiar por carga para Tramo 3 ($)")
+    asignacion_familiar_primer = fields.Float('Tope Tramo 1 AF', digits='Payroll',  help="Límite superior Renta Imponible para Tramo 1 Asig. Familiar ($)")
+    asignacion_familiar_segundo = fields.Float('Tope Tramo 2 AF', digits='Payroll',  help="Límite superior Renta Imponible para Tramo 2 Asig. Familiar ($)")
+    asignacion_familiar_tercer = fields.Float('Tope Tramo 3 AF', digits='Payroll',  help="Límite superior Renta Imponible para Tramo 3 Asig. Familiar ($)")
+    asignacion_familiar_monto_a = fields.Float('Monto Tramo 1 AF', digits='Payroll',  help="Monto Asignación Familiar por carga para Tramo 1 ($)")
+    asignacion_familiar_monto_b = fields.Float('Monto Tramo 2 AF', digits='Payroll',  help="Monto Asignación Familiar por carga para Tramo 2 ($)")
+    asignacion_familiar_monto_c = fields.Float('Monto Tramo 3 AF', digits='Payroll',  help="Monto Asignación Familiar por carga para Tramo 3 ($)")
 
     # Seguro Cesantía
-    contrato_plazo_fijo_empleador = fields.Float('SC Tasa Fijo Empleador (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa Seguro Cesantía Contrato Plazo Fijo (Aporte Empleador %)")
-    contrato_plazo_fijo_trabajador = fields.Float('SC Tasa Fijo Trabajador (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa Seguro Cesantía Contrato Plazo Fijo (Aporte Trabajador %)") # Usually 0
-    contrato_plazo_indefinido_empleador = fields.Float('SC Tasa Indef. Empleador (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa Seguro Cesantía Contrato Plazo Indefinido < 11 años (Aporte Empleador %)")
-    contrato_plazo_indefinido_trabajador = fields.Float('SC Tasa Indef. Trabajador (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa Seguro Cesantía Contrato Plazo Indefinido < 11 años (Aporte Trabajador %)")
-    contrato_plazo_indefinido_empleador_otro = fields.Float('SC Tasa Indef. 11+ Empleador (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa Seguro Cesantía Contrato Plazo Indefinido 11+ años (Aporte Empleador %)")
-    contrato_plazo_indefinido_trabajador_otro = fields.Float('SC Tasa Indef. 11+ Trabajador (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa Seguro Cesantía Contrato Plazo Indefinido 11+ años (Aporte Trabajador %)") # Usually same as < 11
+    contrato_plazo_fijo_empleador = fields.Float('SC Tasa Fijo Empleador (%)', digits='Payroll Rate',  help="Tasa Seguro Cesantía Contrato Plazo Fijo (Aporte Empleador %)")
+    contrato_plazo_fijo_trabajador = fields.Float('SC Tasa Fijo Trabajador (%)', digits='Payroll Rate',  help="Tasa Seguro Cesantía Contrato Plazo Fijo (Aporte Trabajador %)") # Usually 0
+    contrato_plazo_indefinido_empleador = fields.Float('SC Tasa Indef. Empleador (%)', digits='Payroll Rate',  help="Tasa Seguro Cesantía Contrato Plazo Indefinido < 11 años (Aporte Empleador %)")
+    contrato_plazo_indefinido_trabajador = fields.Float('SC Tasa Indef. Trabajador (%)', digits='Payroll Rate',  help="Tasa Seguro Cesantía Contrato Plazo Indefinido < 11 años (Aporte Trabajador %)")
+    contrato_plazo_indefinido_empleador_otro = fields.Float('SC Tasa Indef. 11+ Empleador (%)', digits='Payroll Rate',  help="Tasa Seguro Cesantía Contrato Plazo Indefinido 11+ años (Aporte Empleador %)")
+    contrato_plazo_indefinido_trabajador_otro = fields.Float('SC Tasa Indef. 11+ Trabajador (%)', digits='Payroll Rate',  help="Tasa Seguro Cesantía Contrato Plazo Indefinido 11+ años (Aporte Trabajador %)") # Usually same as < 11
 
     # Otros Legales
-    caja_compensacion = fields.Float('Tasa Base CCAF (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa base de cotización para CCAF (%)")
-    fonasa = fields.Float('Tasa FONASA (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa de cotización obligatoria para FONASA (%)")
-    mutual_seguridad = fields.Float('Tasa Base Mutual (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa base Ley Accidentes del Trabajo (Mutualidad %)")
-    isl = fields.Float('Tasa Base ISL (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa base Ley Accidentes del Trabajo (ISL %)")
-    # pensiones_ips = fields.Float('Pensiones IPS (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tasa antigua previsión IPS (%)") # Less common now
+    caja_compensacion = fields.Float('Tasa Base CCAF (%)', digits='Payroll Rate',  help="Tasa base de cotización para CCAF (%)")
+    fonasa = fields.Float('Tasa FONASA (%)', digits='Payroll Rate',  help="Tasa de cotización obligatoria para FONASA (%)")
+    mutual_seguridad = fields.Float('Tasa Base Mutual (%)', digits='Payroll Rate',  help="Tasa base Ley Accidentes del Trabajo (Mutualidad %)")
+    isl = fields.Float('Tasa Base ISL (%)', digits='Payroll Rate',  help="Tasa base Ley Accidentes del Trabajo (ISL %)")
+    # pensiones_ips = fields.Float('Pensiones IPS (%)', digits='Payroll Rate', , help="Tasa antigua previsión IPS (%)") # Less common now
 
     # Sueldo Mínimo
-    sueldo_minimo = fields.Float('Sueldo Mínimo General', digits='Payroll', readonly=True, states={'draft': [('readonly', False)]}, help="Sueldo Mínimo Mensual para trabajadores dependientes e independientes ($)")
-    sueldo_minimo_otro = fields.Float('Sueldo Mínimo (<18/>65)', digits='Payroll', readonly=True, states={'draft': [('readonly', False)]}, help="Sueldo Mínimo para menores de 18 y mayores de 65 años ($)")
+    sueldo_minimo = fields.Float('Sueldo Mínimo General', digits='Payroll',  help="Sueldo Mínimo Mensual para trabajadores dependientes e independientes ($)")
+    sueldo_minimo_otro = fields.Float('Sueldo Mínimo (<18/>65)', digits='Payroll',  help="Sueldo Mínimo para menores de 18 y mayores de 65 años ($)")
 
     # Tasas AFP
-    tasa_afp_capital = fields.Float('Tasa AFP Capital (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_afp_cuprum = fields.Float('Tasa AFP Cuprum (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_afp_habitat = fields.Float('Tasa AFP Habitat (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_afp_modelo = fields.Float('Tasa AFP Modelo (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_afp_planvital = fields.Float('Tasa AFP PlanVital (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_afp_provida = fields.Float('Tasa AFP ProVida (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_afp_uno = fields.Float('Tasa AFP Uno (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}) # Added readonly
+    tasa_afp_capital = fields.Float('Tasa AFP Capital (%)', digits='Payroll Rate', )
+    tasa_afp_cuprum = fields.Float('Tasa AFP Cuprum (%)', digits='Payroll Rate', )
+    tasa_afp_habitat = fields.Float('Tasa AFP Habitat (%)', digits='Payroll Rate', )
+    tasa_afp_modelo = fields.Float('Tasa AFP Modelo (%)', digits='Payroll Rate', )
+    tasa_afp_planvital = fields.Float('Tasa AFP PlanVital (%)', digits='Payroll Rate', )
+    tasa_afp_provida = fields.Float('Tasa AFP ProVida (%)', digits='Payroll Rate', )
+    tasa_afp_uno = fields.Float('Tasa AFP Uno (%)', digits='Payroll Rate', ) # Added readonly
 
     # Tasas SIS (Seguro Invalidez y Sobrevivencia)
-    tasa_sis_capital = fields.Float('Tasa SIS Capital (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_sis_cuprum = fields.Float('Tasa SIS Cuprum (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_sis_habitat = fields.Float('Tasa SIS Habitat (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_sis_modelo = fields.Float('Tasa SIS Modelo (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}) # Added readonly
-    tasa_sis_planvital = fields.Float('Tasa SIS PlanVital (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_sis_provida = fields.Float('Tasa SIS ProVida (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_sis_uno = fields.Float('Tasa SIS Uno (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}) # Added readonly
+    tasa_sis_capital = fields.Float('Tasa SIS Capital (%)', digits='Payroll Rate', )
+    tasa_sis_cuprum = fields.Float('Tasa SIS Cuprum (%)', digits='Payroll Rate', )
+    tasa_sis_habitat = fields.Float('Tasa SIS Habitat (%)', digits='Payroll Rate', )
+    tasa_sis_modelo = fields.Float('Tasa SIS Modelo (%)', digits='Payroll Rate', ) # Added readonly
+    tasa_sis_planvital = fields.Float('Tasa SIS PlanVital (%)', digits='Payroll Rate', )
+    tasa_sis_provida = fields.Float('Tasa SIS ProVida (%)', digits='Payroll Rate', )
+    tasa_sis_uno = fields.Float('Tasa SIS Uno (%)', digits='Payroll Rate', ) # Added readonly
 
     # Tasas Independientes (Suma AFP + SIS)
-    tasa_independiente_capital = fields.Float('Tasa Indep. Capital (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_independiente_cuprum = fields.Float('Tasa Indep. Cuprum (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_independiente_habitat = fields.Float('Tasa Indep. Habitat (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_independiente_modelo = fields.Float('Tasa Indep. Modelo (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}) # Added readonly
-    tasa_independiente_planvital = fields.Float('Tasa Indep. PlanVital (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_independiente_provida = fields.Float('Tasa Indep. ProVida (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]})
-    tasa_independiente_uno = fields.Float('Tasa Indep. Uno (%)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}) # Added readonly
+    tasa_independiente_capital = fields.Float('Tasa Indep. Capital (%)', digits='Payroll Rate', )
+    tasa_independiente_cuprum = fields.Float('Tasa Indep. Cuprum (%)', digits='Payroll Rate', )
+    tasa_independiente_habitat = fields.Float('Tasa Indep. Habitat (%)', digits='Payroll Rate', )
+    tasa_independiente_modelo = fields.Float('Tasa Indep. Modelo (%)', digits='Payroll Rate', ) # Added readonly
+    tasa_independiente_planvital = fields.Float('Tasa Indep. PlanVital (%)', digits='Payroll Rate', )
+    tasa_independiente_provida = fields.Float('Tasa Indep. ProVida (%)', digits='Payroll Rate', )
+    tasa_independiente_uno = fields.Float('Tasa Indep. Uno (%)', digits='Payroll Rate', ) # Added readonly
 
     # Topes Imponibles y Ahorro
-    tope_anual_apv = fields.Float('Tope Anual APV (UF)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tope Anual Ahorro Previsional Voluntario (UF)")
-    tope_mensual_apv = fields.Float('Tope Mensual APV (UF)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tope Mensual Ahorro Previsional Voluntario (UF)")
-    tope_imponible_afp = fields.Float('Tope Imponible AFP/IPS (UF)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tope Imponible Mensual para cotizaciones de AFP e IPS (UF)")
-    tope_imponible_ips = fields.Float('Tope Imponible IPS (UF)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tope Imponible Mensual para cotizaciones IPS (UF)") # Often same as AFP
-    tope_imponible_salud = fields.Float('Tope Imponible Salud (UF)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tope Imponible Mensual para cotizaciones de Salud (UF)")
-    tope_imponible_seguro_cesantia = fields.Float('Tope Imponible SC (UF)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tope Imponible Mensual para Seguro de Cesantía (UF)")
-    deposito_convenido = fields.Float('Tope Depósito Convenido (UF)', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="Tope Anual para Depósitos Convenidos (UF)")
+    tope_anual_apv = fields.Float('Tope Anual APV (UF)', digits='Payroll Rate',  help="Tope Anual Ahorro Previsional Voluntario (UF)")
+    tope_mensual_apv = fields.Float('Tope Mensual APV (UF)', digits='Payroll Rate',  help="Tope Mensual Ahorro Previsional Voluntario (UF)")
+    tope_imponible_afp = fields.Float('Tope Imponible AFP/IPS (UF)', digits='Payroll Rate',  help="Tope Imponible Mensual para cotizaciones de AFP e IPS (UF)")
+    tope_imponible_ips = fields.Float('Tope Imponible IPS (UF)', digits='Payroll Rate',  help="Tope Imponible Mensual para cotizaciones IPS (UF)") # Often same as AFP
+    tope_imponible_salud = fields.Float('Tope Imponible Salud (UF)', digits='Payroll Rate',  help="Tope Imponible Mensual para cotizaciones de Salud (UF)")
+    tope_imponible_seguro_cesantia = fields.Float('Tope Imponible SC (UF)', digits='Payroll Rate',  help="Tope Imponible Mensual para Seguro de Cesantía (UF)")
+    deposito_convenido = fields.Float('Tope Depósito Convenido (UF)', digits='Payroll Rate',  help="Tope Anual para Depósitos Convenidos (UF)")
 
     # Valores Monetarios
-    uf = fields.Float('Valor UF (Fin de Mes)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)]}, help="Valor de la Unidad de Fomento al último día del mes ($)")
-    utm = fields.Float('Valor UTM (Mes)', digits='Payroll', required=True, readonly=True, states={'draft': [('readonly', False)]}, help="Valor de la Unidad Tributaria Mensual para el mes ($)")
-    uta = fields.Float('Valor UTA (Año)', digits='Payroll', readonly=True, states={'draft': [('readonly', False)]}, help="Valor de la Unidad Tributaria Anual ($)")
-    uf_otros = fields.Float('UF Otros', digits='Payroll Rate', readonly=True, states={'draft': [('readonly', False)]}, help="UF Seguro Complementario") # Not standard Previred, maybe remove?
-    ipc = fields.Float('Variación IPC Mensual (%)', digits='Payroll Rate', required=False, readonly=True, states={'draft': [('readonly', False)]}, help="Índice de Precios al Consumidor (Variación % mensual)") # Made not required
+    uf = fields.Float('Valor UF (Fin de Mes)', digits=(16, 2),   help="Valor de la Unidad de Fomento al último día del mes ($)")
+    utm = fields.Float('Valor UTM (Mes)', digits='Payroll', required=True,  help="Valor de la Unidad Tributaria Mensual para el mes ($)")
+    uta = fields.Float('Valor UTA (Año)', digits='Payroll',  help="Valor de la Unidad Tributaria Anual ($)")
+    uf_otros = fields.Float('UF Otros', digits='Payroll Rate',  help="UF Seguro Complementario") # Not standard Previred, maybe remove?
+    ipc = fields.Float('Variación IPC Mensual (%)', digits='Payroll Rate', required=False,  help="Índice de Precios al Consumidor (Variación % mensual)") # Made not required
 
     # Instituciones por defecto (pueden ser configuradas en la Cia)
-    mutualidad_id = fields.Many2one('hr.mutual', 'Mutualidad Compañía', readonly=True, states={'draft': [('readonly', False)]}, help="Mutualidad a la que está afiliada la empresa")
-    ccaf_id = fields.Many2one('hr.ccaf', 'CCAF Compañía', readonly=True, states={'draft': [('readonly', False)]}, help="CCAF a la que está afiliada la empresa")
+    mutualidad_id = fields.Many2one('hr.mutual', 'Mutualidad Compañía',  help="Mutualidad a la que está afiliada la empresa")
+    ccaf_id = fields.Many2one('hr.ccaf', 'CCAF Compañía',  help="CCAF a la que está afiliada la empresa")
 
     # Configuración Adicional (podría ir en res.config.settings)
-    gratificacion_legal = fields.Boolean('Gratificación L. Manual', readonly=True, states={'draft': [('readonly', False)]}) # Moved to contract
-    mutual_seguridad_bool = fields.Boolean('Empresa Afiliada a Mutual', default=True, readonly=True, states={'draft': [('readonly', False)]}, help="Indica si la empresa está afiliada a una Mutual (vs ISL)")
-
+    gratificacion_legal = fields.Boolean('Gratificación L. Manual', ) # Moved to contract
+    mutual_seguridad_bool = fields.Boolean('Empresa Afiliada a Mutual', default=True,  help="Indica si la empresa está afiliada a una Mutual (vs ISL)")
 
     gratificacion_legal = fields.Boolean(
         string="Activar Gratificación Legal Manual",
-        readonly=True, states={'draft': [('readonly', False)]},
+        
         help="Permite usar gratificación legal en vez de regla estándar. Se puede condicionar en reglas salariales."
     )
 
     tope_imponible_ips = fields.Float(
         string="Tope Imponible IPS (UF)",
         digits='Payroll Rate',
-        readonly=True, states={'draft': [('readonly', False)]},
+        
         help="Usualmente igual al tope de AFP, salvo casos especiales"
     )
 
     pensiones_ips = fields.Boolean(
         string="Empresa tiene cotizantes en IPS",
         default=False,
-        readonly=True, states={'draft': [('readonly', False)]},
+        
         help="Activa reglas especiales si la empresa tiene empleados cotizando en IPS"
     )
 
@@ -322,3 +343,23 @@ class HrIndicadores(models.Model): # Renamed class
                 raise UserError(_("Error inesperado al actualizar indicadores para {}: {}").format(record.name, e))
 
         return True # Indicate success or partial success if needed
+    
+    def action_parse_pdf(self):
+        if not self.pdf_file:
+            raise UserError("Debe cargar un archivo PDF.")
+        
+        try:
+            import base64
+            from io import BytesIO
+            import fitz  # PyMuPDF
+
+            file_data = base64.b64decode(self.pdf_file)
+            pdf_doc = fitz.open(stream=BytesIO(file_data), filetype="pdf")
+            text = ""
+            for page in pdf_doc:
+                text += page.get_text()
+
+            self._parse_values_from_text(text)
+
+        except Exception as e:
+            raise UserError(f"Error al procesar el PDF: {e}")

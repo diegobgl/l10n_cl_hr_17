@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- Sueldo Base -->
+        <record id="hr_salary_rule_chile_sueldo_base" model="hr.salary.rule">
+            <field name="name">Sueldo Base</field>
+            <field name="code">SUELDO</field>
+            <field name="sequence">10</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="amount_select">code</field>
+            <field name="condition_select">none</field>
+            <field name="amount_python_compute">result = contract.wage</field>
+        </record>
+
+        <!-- Gratificación Legal -->
+        <record id="hr_salary_rule_chile_gratificacion" model="hr.salary.rule">
+            <field name="name">Gratificación Legal</field>
+            <field name="code">GRATIFICACION</field>
+            <field name="sequence">15</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = contract.gratificacion_legal</field>
+            <field name="amount_select">code</field>
+            <field name="amount_python_compute">
+                result = min(contract.wage * 0.25, contract.indicadores_id.utm * 4.75) if contract.indicadores_id else 0.0
+            </field>
+        </record>
+
+        <!-- Puedes repetir el mismo patrón para las demás reglas -->
+        <!-- AFP, SIS, SALUD, SC_TRAB, SC_EMPL, COLACIÓN, MOVILIZACIÓN, ASIG_FAMILIAR -->
+
+    </data>
+</odoo>
