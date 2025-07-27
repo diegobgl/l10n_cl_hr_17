@@ -9,10 +9,10 @@ from datetime import datetime
 import logging
 import requests # Keep requests as a fallback or alternative if needed
 import re # For cleaning strings more robustly
- import base64
- import io
- import re
- from PyPDF2 import PdfReader
+import base64
+import io
+import re
+from PyPDF2 import PdfReader
 
 
 _logger = logging.getLogger(__name__)
