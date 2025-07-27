@@ -9,10 +9,10 @@ from datetime import datetime
 import logging
 import requests # Keep requests as a fallback or alternative if needed
 import re # For cleaning strings more robustly
-# import base64
-# import io
-# import re
-# from PyPDF2 import PdfReader
+ import base64
+ import io
+ import re
+ from PyPDF2 import PdfReader
 
 
 _logger = logging.getLogger(__name__)
@@ -363,3 +363,40 @@ class HrIndicadores(models.Model): # Renamed class
 
         except Exception as e:
             raise UserError(f"Error al procesar el PDF: {e}")
+
+
+    def _parse_values_from_text(self, text):
+        """Extrae valores numéricos del texto del PDF y los asigna a los campos del modelo."""
+        import re
+        import unicodedata
+
+        def normalize(texto):
+            return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")
+
+        try:
+            lines = normalize(text).splitlines()
+
+            mapping = {
+                'UF': 'uf',
+                'UTM': 'utm',
+                'Tope Imponible AFP': 'tope_afp',
+                'Tope Imponible Salud': 'tope_salud',
+                'FONASA': 'fonasa',
+                'APV Voluntario': 'tope_apv',
+                'Seguro Cesantía contrato indefinido trabajador': 'contrato_plazo_indefinido_trabajador',
+                'Seguro Cesantía contrato indefinido empleador': 'contrato_plazo_indefinido_empleador',
+                'Asignación Familiar Tramo A': 'asignacion_familiar_monto_a',
+                'Asignación Familiar Tramo B': 'asignacion_familiar_monto_b',
+                'Asignación Familiar Tramo C': 'asignacion_familiar_monto_c',
+                'Asignación Familiar Tramo D': 'asignacion_familiar_monto_d',
+            }
+
+            for line in lines:
+                for label, field in mapping.items():
+                    if label.lower() in line.lower():
+                        match = re.search(r'([\d\.]+)', line.replace(".", "").replace(",", "."))
+                        if match:
+                            value = float(match.group(1))
+                            setattr(self, field, value)
+        except Exception as e:
+            raise ValueError(f"Error al analizar el texto: {e}")
