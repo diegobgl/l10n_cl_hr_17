@@ -12,7 +12,7 @@ import re # For cleaning strings more robustly
 import base64
 import io
 import re
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
 
 _logger = logging.getLogger(__name__)
@@ -350,8 +350,8 @@ class HrIndicadores(models.Model): # Renamed class
 
         try:
             decoded = base64.b64decode(self.pdf_file)
-            reader = PdfFileReader(io.BytesIO(decoded))
-            text = "\n".join(reader.getPage(i).extractText() for i in range(reader.getNumPages()))
+            reader = PdfReader(io.BytesIO(decoded))
+            text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
             self._parse_values_from_text(text)
         except Exception as e:
             raise UserError("Error al procesar el PDF: %s" % str(e))
