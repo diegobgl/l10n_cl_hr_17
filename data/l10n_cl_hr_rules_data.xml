@@ -29,8 +29,114 @@
             </field>
         </record>
 
-        <!-- Puedes repetir el mismo patrón para las demás reglas -->
-        <!-- AFP, SIS, SALUD, SC_TRAB, SC_EMPL, COLACIÓN, MOVILIZACIÓN, ASIG_FAMILIAR -->
+        <!-- AFP -->
+        <record id="hr_salary_rule_chile_afp" model="hr.salary.rule">
+            <field name="name">AFP</field>
+            <field name="code">AFP</field>
+            <field name="sequence">20</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="amount_select">code</field>
+            <field name="condition_select">none</field>
+            <field name="amount_python_compute">
+                result = -contract.indicadores_id.tasa_afp_capital / 100.0 * contract.wage if contract.indicadores_id else 0.0
+            </field>
+        </record>
+
+        <!-- SIS -->
+        <record id="hr_salary_rule_chile_sis" model="hr.salary.rule">
+            <field name="name">SIS</field>
+            <field name="code">SIS</field>
+            <field name="sequence">25</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="amount_select">code</field>
+            <field name="condition_select">none</field>
+            <field name="amount_python_compute">
+                result = -contract.indicadores_id.tasa_sis_capital / 100.0 * contract.wage if contract.indicadores_id else 0.0
+            </field>
+        </record>
+
+        <!-- Salud (Fonasa/Isapre) -->
+        <record id="hr_salary_rule_chile_salud" model="hr.salary.rule">
+            <field name="name">Salud</field>
+            <field name="code">SALUD</field>
+            <field name="sequence">30</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="amount_select">code</field>
+            <field name="condition_select">none</field>
+            <field name="amount_python_compute">
+                result = -contract.indicadores_id.fonasa / 100.0 * contract.wage if contract.indicadores_id else 0.0
+            </field>
+        </record>
+
+        <!-- Seguro Cesantía Trabajador -->
+        <record id="hr_salary_rule_chile_sc_trabajador" model="hr.salary.rule">
+            <field name="name">Seguro Cesantía Trabajador</field>
+            <field name="code">SC_TRAB</field>
+            <field name="sequence">35</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="amount_select">code</field>
+            <field name="condition_select">none</field>
+            <field name="amount_python_compute">
+                result = -contract.indicadores_id.contrato_plazo_indefinido_trabajador / 100.0 * contract.wage if contract.indicadores_id else 0.0
+            </field>
+        </record>
+
+        <!-- Seguro Cesantía Empleador -->
+        <record id="hr_salary_rule_chile_sc_empleador" model="hr.salary.rule">
+            <field name="name">Seguro Cesantía Empleador</field>
+            <field name="code">SC_EMPL</field>
+            <field name="sequence">40</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="amount_select">code</field>
+            <field name="condition_select">none</field>
+            <field name="amount_python_compute">
+                result = -contract.indicadores_id.contrato_plazo_indefinido_empleador / 100.0 * contract.wage if contract.indicadores_id else 0.0
+            </field>
+        </record>
+
+        <!-- Colación -->
+        <record id="hr_salary_rule_chile_colacion" model="hr.salary.rule">
+            <field name="name">Colación</field>
+            <field name="code">COLACION</field>
+            <field name="sequence">45</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="amount_select">code</field>
+            <field name="condition_select">none</field>
+            <field name="amount_python_compute">result = contract.colacion or 0.0</field>
+        </record>
+
+        <!-- Movilización -->
+        <record id="hr_salary_rule_chile_movilizacion" model="hr.salary.rule">
+            <field name="name">Movilización</field>
+            <field name="code">MOVILIZACION</field>
+            <field name="sequence">50</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="amount_select">code</field>
+            <field name="condition_select">none</field>
+            <field name="amount_python_compute">result = contract.movilizacion or 0.0</field>
+        </record>
+
+        <!-- Asignación Familiar -->
+        <record id="hr_salary_rule_chile_asig_familiar" model="hr.salary.rule">
+            <field name="name">Asignación Familiar</field>
+            <field name="code">ASIGFAM</field>
+            <field name="sequence">55</field>
+            <field name="category_id" ref="hr_salary_rule_category_chile"/>
+            <field name="struct_id" ref="hr_pay_structure_chile"/>
+            <field name="amount_select">code</field>
+            <field name="condition_select">python</field>
+            <field name="condition_python">result = employee.family_dependents &gt; 0</field>
+            <field name="amount_python_compute">
+                result = contract.indicadores_id.asignacion_familiar_monto_a * employee.family_dependents if contract.indicadores_id else 0.0
+            </field>
+        </record>
 
     </data>
 </odoo>
