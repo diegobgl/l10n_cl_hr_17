@@ -12,7 +12,7 @@ import re # For cleaning strings more robustly
 import base64
 import io
 import re
-from PyPDF2 import PdfReader
+from PyPDF2 import PdfFileReader
 
 
 _logger = logging.getLogger(__name__)
@@ -346,23 +346,16 @@ class HrIndicadores(models.Model): # Renamed class
     
     def action_parse_pdf(self):
         if not self.pdf_file:
-            raise UserError("Debe cargar un archivo PDF.")
-        
+            raise UserError("Debes adjuntar un archivo PDF.")
+
         try:
-            import base64
-            from io import BytesIO
-            import fitz  # PyMuPDF
-
-            file_data = base64.b64decode(self.pdf_file)
-            pdf_doc = fitz.open(stream=BytesIO(file_data), filetype="pdf")
-            text = ""
-            for page in pdf_doc:
-                text += page.get_text()
-
+            decoded = base64.b64decode(self.pdf_file)
+            reader = PdfFileReader(io.BytesIO(decoded))
+            text = "\n".join(reader.getPage(i).extractText() for i in range(reader.getNumPages()))
             self._parse_values_from_text(text)
-
         except Exception as e:
-            raise UserError(f"Error al procesar el PDF: {e}")
+            raise UserError("Error al procesar el PDF: %s" % str(e))
+
 
 
     def _parse_values_from_text(self, text):
