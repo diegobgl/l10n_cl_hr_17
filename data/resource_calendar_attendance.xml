@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="0">
+    <data noupdate="1">
 
         <!-- Calendario de trabajo personalizado para Chile -->
         <record id="hr_resource_monthly_cl_chile" model="resource.calendar">
