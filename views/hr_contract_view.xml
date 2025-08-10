@@ -2,68 +2,58 @@
   <record id="view_hr_contract_form_chile" model="ir.ui.view">
     <field name="name">hr.contract.chile.form</field>
     <field name="model">hr.contract</field>
-    <!-- Si tienes la pestaña de Información salarial, hereda esta -->
+    <!-- Heredamos la vista que tiene la página 'information' y el bloque nativo -->
     <field name="inherit_id" ref="hr_contract_salary.hr_contract_view_form"/>
     <field name="arch" type="xml">
 
-      <!-- Inserta tus campos dentro del group salary con el mismo look -->
-      <xpath expr="//page[@name='information']//group[@name='salary']" position="inside">
-        <label for="otros_imp"/>
-        <div class="o_row mw-50" name="otros_imp_row">
-          <field name="otros_imp" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-          <div class="mb-3">/ mes</div>
-        </div>
+      <!-- Insertamos UN solo group DESPUÉS del bloque nativo -->
+      <xpath expr="//page[@name='information']/group[@name='salary_info']" position="after">
+        <group name="cl_extra_components" string="Componentes Chile">
+          <!-- Otros Imponibles -->
+          <label for="otros_imp"/>
+          <div class="o_row mw-50" name="otros_imp_row">
+            <field name="otros_imp" class="oe_inline o_hr_narrow_field" nolabel="1"/>
+            <div class="mb-3">/ mes</div>
+          </div>
 
-        <label for="otro_no_imp"/>
-        <div class="o_row mw-50" name="otro_no_imp_row">
-          <field name="otro_no_imp" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-          <div class="mb-3">/ mes</div>
-        </div>
+          <!-- Otros No Imponibles -->
+          <label for="otro_no_imp"/>
+          <div class="o_row mw-50" name="otro_no_imp_row">
+            <field name="otro_no_imp" class="oe_inline o_hr_narrow_field" nolabel="1"/>
+            <div class="mb-3">/ mes</div>
+          </div>
 
-        <group name="cl_allowances" col="2" class="o_inner_group">
-          <field name="colacion"/>
-          <field name="movilizacion"/>
-          <field name="viatico_santiago"/>
-          <field name="anticipo_sueldo"/>
-          <field name="gratificacion_legal"/>
+          <!-- Asignaciones (mismo patrón visual, sin groups anidados) -->
+          <label for="colacion"/>
+          <div class="o_row mw-50" name="colacion_row">
+            <field name="colacion" class="oe_inline o_hr_narrow_field" nolabel="1"/>
+            <div class="mb-3">/ mes</div>
+          </div>
+
+          <label for="movilizacion"/>
+          <div class="o_row mw-50" name="movilizacion_row">
+            <field name="movilizacion" class="oe_inline o_hr_narrow_field" nolabel="1"/>
+            <div class="mb-3">/ mes</div>
+          </div>
+
+          <label for="viatico_santiago"/>
+          <div class="o_row mw-50" name="viatico_santiago_row">
+            <field name="viatico_santiago" class="oe_inline o_hr_narrow_field" nolabel="1"/>
+            <div class="mb-3">/ mes</div>
+          </div>
+
+          <label for="anticipo_sueldo"/>
+          <div class="o_row mw-50" name="anticipo_sueldo_row">
+            <field name="anticipo_sueldo" class="oe_inline o_hr_narrow_field" nolabel="1"/>
+            <div class="mb-3">/ mes</div>
+          </div>
+
+          <label for="gratificacion_legal"/>
+          <div class="o_row mw-50" name="gratificacion_legal_row">
+            <field name="gratificacion_legal" class="oe_inline o_hr_narrow_field" nolabel="1"/>
+            <div class="mb-3">/ mes</div>
+          </div>
         </group>
-      </xpath>
-
-      <!-- Tus páginas extra -->
-      <xpath expr="//page[@name='information']" position="after">
-        <page string="Carga Familiar" name="carga_familiar">
-          <group>
-            <field name="carga_familiar"/>
-            <field name="carga_familiar_maternal"/>
-            <field name="carga_familiar_invalida"/>
-          </group>
-        </page>
-
-        <page string="Salud" name="health">
-          <group>
-            <field name="isapre_id"/>
-            <field name="isapre_moneda" invisible="isapre_id == False"/>
-            <field name="isapre_cotizacion_uf" invisible="isapre_id == False"/>
-            <field name="isapre_fun" invisible="isapre_id == False"/>
-            <field name="isapre_cuenta_propia" invisible="isapre_id == False"/>
-            <field name="seguro_complementario_id"/>
-            <field name="seguro_complementario_moneda"/>
-            <field name="seguro_complementario"/>
-          </group>
-        </page>
-
-        <page string="Fondos de Pensión" name="afp">
-          <group>
-            <field name="pension"/>
-            <field name="sin_afp"/>
-            <field name="sin_afp_sis"/>
-            <field name="afp_id" invisible="not pension"/>
-            <field name="apv_id"/>
-            <field name="aporte_voluntario_moneda"/>
-            <field name="aporte_voluntario"/>
-            <field name="forma_pago_apv"/>
-          </group>
-        </page>
       </xpath>
 
     </field>
