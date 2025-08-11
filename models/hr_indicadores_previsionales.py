@@ -324,76 +324,114 @@ class HrIndicadores(models.Model):
     # --- Parser de texto PDF
     def _parse_values_from_text(self, text):
         import unicodedata
-
+        import re
         def normalize(txt):
-            return unicodedata.normalize("NFKD", txt).encode("ascii", "ignore").decode("ascii")
+            # quita acentos, NBSP/espacios raros y lowercase
+            t = unicodedata.normalize("NFKD", txt).encode("ascii", "ignore").decode("ascii")
+            t = t.replace("\u00a0", " ").replace("\u202f", " ").replace("\ufeff", " ")
+            return "\n".join(line.strip() for line in t.splitlines())
 
-        lines = normalize(text).splitlines()
-        num_re = re.compile(r'[-+]?\d{1,3}(?:[\.\s]\d{3})*(?:[,\.]\d+)?|[-+]?\d+(?:[,\.]\d+)?')
-
-        def parse_number(s):
-            m = num_re.search(s)
-            if not m:
+        def to_float_num(s):
+            if not s:
                 return None
-            v = m.group(0).replace("\u202f", "").replace(" ", "")
-            # normaliza miles/decimales estilo CL
-            if v.count(",") == 1 and v.count(".") >= 1:
-                v = v.replace(".", "").replace(",", ".")
-            elif "," in v and "." not in v:
-                v = v.replace(",", ".")
+            s = s.strip().replace(" ", "")
+            # si viene tipo 11,44 o 3.439.917,00
+            if s.count(",") == 1 and s.count(".") >= 1:
+                s = s.replace(".", "").replace(",", ".")
+            elif "," in s and "." not in s:
+                s = s.replace(",", ".")
             else:
-                v = v.replace(",", "")
+                s = s.replace(",", "")
             try:
-                return float(v)
+                return float(s)
             except Exception:
                 return None
 
+        txt = normalize(text)
+        lines = [l for l in txt.splitlines() if l]
+
         vals = {}
-        for raw in lines:
-            line = raw.strip()
+
+        # --- 1) UF, UTM, UTA
+        # Ej: "Valor UF  Al 31 de Julio del 2025: $ 39.179,01"
+        m = re.search(r"valor\s+uf.*?\$\s*([\d\.,]+)", txt, flags=re.I|re.S)
+        if m:
+            v = to_float_num(m.group(1))
+            if v is not None:
+                vals['uf'] = v
+        # Ej: "Valor UTM UTA ... Julio 2025 $ 68.923 $ 827.076"
+        m = re.search(r"valor\s+utm\s+uta.*?\$\s*([\d\.,]+)\s*\$\s*([\d\.,]+)", txt, flags=re.I|re.S)
+        if m:
+            utm = to_float_num(m.group(1))
+            uta = to_float_num(m.group(2))
+            if utm is not None:
+                vals['utm'] = utm
+            if uta is not None:
+                vals['uta'] = uta
+
+        # --- 2) Topes imponibles (UF desde paréntesis)
+        # "Para afiliados a una AFP (87,8 UF)"
+        m = re.search(r"para\s+afiliados\s+a\s+una\s+afp\s*\(([\d\.,]+)\s*uf\)", txt, flags=re.I)
+        if m:
+            v = to_float_num(m.group(1))
+            if v is not None:
+                vals['tope_imponible_afp'] = v
+        # "Para afiliados al INP (60 UF)"  -> IPS
+        m = re.search(r"para\s+afiliados\s+al\s+inp\s*\(([\d\.,]+)\s*uf\)", txt, flags=re.I)
+        if m:
+            v = to_float_num(m.group(1))
+            if v is not None:
+                vals['tope_imponible_ips'] = v
+        # "Para Seguro de Cesantía (131,9 UF)"
+        m = re.search(r"para\s+seguro\s+de\s+cesantia\s*\(([\d\.,]+)\s*uf\)", txt, flags=re.I)
+        if m:
+            v = to_float_num(m.group(1))
+            if v is not None:
+                vals['tope_imponible_seguro_cesantia'] = v
+
+        # --- 3) Rentas mínimas
+        # "Trab. Dependientes e Independientes: $ 529.000"
+        m = re.search(r"trab\.\s*dependientes\s*e\s*independientes.*?\$\s*([\d\.,]+)", txt, flags=re.I)
+        if m:
+            v = to_float_num(m.group(1))
+            if v is not None:
+                vals['sueldo_minimo'] = v
+        # "Menores de 18 y Mayores de 65: $ 394.622"
+        m = re.search(r"menores\s*de\s*18\s*y\s*mayores\s*de\s*65.*?\$\s*([\d\.,]+)", txt, flags=re.I)
+        if m:
+            v = to_float_num(m.group(1))
+            if v is not None:
+                vals['sueldo_minimo_otro'] = v
+
+        # --- 4) APV (usar UF del paréntesis)
+        # "Tope Mensual (50 UF)" / "Tope Anual (600 UF)"
+        m = re.search(r"apv.*?tope\s+mensual\s*\(([\d\.,]+)\s*uf\)", txt, flags=re.I|re.S)
+        if m:
+            v = to_float_num(m.group(1))
+            if v is not None:
+                vals['tope_mensual_apv'] = v
+        m = re.search(r"apv.*?tope\s+anual\s*\(([\d\.,]+)\s*uf\)", txt, flags=re.I|re.S)
+        if m:
+            v = to_float_num(m.group(1))
+            if v is not None:
+                vals['tope_anual_apv'] = v
+
+        # --- 5) Depósito Convenido (UF del paréntesis)
+        m = re.search(r"deposito\s+convenido.*?tope\s+anual\s*\(([\d\.,]+)\s*uf\)", txt, flags=re.I|re.S)
+        if m:
+            v = to_float_num(m.group(1))
+            if v is not None:
+                vals['deposito_convenido'] = v
+
+        # --- 6) AFC (Seguro de Cesantía) tasas
+        # "Plazo Indefinido 2,4% ... 0,6%"
+        def pct_in(line):
+            p = re.findall(r"([\d\.,]+)\s*%", line)
+            return [to_float_num(x) for x in p] if p else []
+
+        for line in lines:
             low = line.lower()
-
-            # directos
-            if ' uf' in f' {low}' or low.startswith('uf'):
-                v = parse_number(line)
-                if v is not None:
-                    vals['uf'] = v
-            elif 'utm' in low:
-                v = parse_number(line);  vals['utm'] = v if v is not None else vals.get('utm')
-            elif 'fonasa' in low:
-                v = parse_number(line);  vals['fonasa'] = v if v is not None else vals.get('fonasa')
-            elif 'tope imponible afp' in low or 'tope imponible ips' in low:
-                v = parse_number(line);  vals['tope_imponible_afp'] = v if v is not None else vals.get('tope_imponible_afp')
-            elif 'tope imponible salud' in low:
-                v = parse_number(line);  vals['tope_imponible_salud'] = v if v is not None else vals.get('tope_imponible_salud')
-            elif 'tope imponible sc' in low or 'tope imponible seguro cesantia' in low:
-                v = parse_number(line);  vals['tope_imponible_seguro_cesantia'] = v if v is not None else vals.get('tope_imponible_seguro_cesantia')
-
-            # APV: detectar mensual/anual por el texto
-            elif 'apv' in low or 'ahorro previsional voluntario' in low:
-                v = parse_number(line)
-                if v is not None:
-                    if 'anual' in low:
-                        vals['tope_anual_apv'] = v
-                    elif 'mensual' in low:
-                        vals['tope_mensual_apv'] = v
-
-            # Seguro de cesantía (tasas)
-            elif 'seguro cesantia contrato indefinido trabajador' in low:
-                v = parse_number(line);  vals['contrato_plazo_indefinido_trabajador'] = v
-            elif 'seguro cesantia contrato indefinido empleador' in low:
-                v = parse_number(line);  vals['contrato_plazo_indefinido_empleador'] = v
-
-            # Asignación familiar
-            elif 'asignacion familiar tramo a' in low:
-                v = parse_number(line);  vals['asignacion_familiar_monto_a'] = v
-            elif 'asignacion familiar tramo b' in low:
-                v = parse_number(line);  vals['asignacion_familiar_monto_b'] = v
-            elif 'asignacion familiar tramo c' in low:
-                v = parse_number(line);  vals['asignacion_familiar_monto_c'] = v
-
-        if vals:
-            self.write(vals)
+            if 'plazo indefinido'
 
 
 
