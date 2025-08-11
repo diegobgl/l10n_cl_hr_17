@@ -135,6 +135,14 @@ class HrIndicadores(models.Model):
         help="Indica si la empresa está afiliada a una Mutual (vs ISL)"
     )
 
+    def action_done(self):
+        self.write({'state': 'done'})
+        return True
+    
+    def action_draft(self):
+        self.write({'state': 'draft'})
+        return True
+    
     # --- Constraints
     _sql_constraints = [
         ('month_year_uniq', 'unique (month, year)', 'Ya existen indicadores para este Mes y Año!'),
@@ -387,10 +395,5 @@ class HrIndicadores(models.Model):
         if vals:
             self.write(vals)
 
-    def action_done(self):
-            self.write({'state': 'done'})
-            return True
 
-    def action_draft(self):
-        self.write({'state': 'draft'})
-        return True
+
