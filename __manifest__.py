@@ -82,7 +82,7 @@
          'data/hr_holidays_status.xml',
         # 'data/account_journal.xml',
         # 'data/hr_centros_costos.xml',
-        # 'data/resource_calendar_attendance.xml', # noupdate="1" temporal
+         'data/resource_calendar_attendance.xml', # noupdate="1" temporal
         #'data/partner.xml', # noupdate="1"
          'data/l10n_cl_hr_afp.xml',
          'data/l10n_cl_hr_apv.xml',
