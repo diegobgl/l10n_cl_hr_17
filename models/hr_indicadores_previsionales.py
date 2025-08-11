@@ -431,7 +431,81 @@ class HrIndicadores(models.Model):
 
         for line in lines:
             low = line.lower()
-            if 'plazo indefinido'
+            if 'plazo indefinido' in low and '%' in low and '11' not in low:
+                # ej: "Plazo Indefinido 2,4% ... 0,6%"
+                ps = pct_in(line)
+                if len(ps) >= 2:
+                    vals['contrato_plazo_indefinido_empleador'] = ps[0]
+                    vals['contrato_plazo_indefinido_trabajador'] = ps[1]
+            elif 'plazo fijo' in low and '%' in low:
+                # ej: "Plazo Fijo 3,0% R.I. -"
+                ps = pct_in(line)
+                if len(ps) >= 1:
+                    vals['contrato_plazo_fijo_empleador'] = ps[0]
+            elif 'indefinido 11' in low and '%' in low:
+                # ej: "Plazo Indefinido 11 años o más 0,8% R.I."
+                ps = pct_in(line)
+                if len(ps) >= 1:
+                    vals['contrato_plazo_indefinido_empleador_otro'] = ps[0]
+
+        # --- 7) AFP (fila por fila) → 3 números: AFP / SIS / “Independientes/Total”
+        # Ej líneas:
+        # "Capital 11,44% 1,88% 13,32%"
+        # "Uno 10,49% 1,88% 12,37%"
+        afp_map = {
+            'capital': 'capital', 'cuprum': 'cuprum', 'habitat': 'habitat',
+            'planvital': 'planvital', 'provida': 'provida', 'modelo': 'modelo', 'uno': 'uno'
+        }
+        rx_afp = re.compile(r"^(capital|cuprum|habitat|planvital|provida|modelo|uno)\s+([\d\.,]+)%\s+([\d\.,]+)%\s+([\d\.,]+)%$", re.I)
+        for line in lines:
+            m = rx_afp.match(line)
+            if not m:
+                continue
+            name, t_afp, t_sis, t_indep = m.groups()
+            key = afp_map[name.lower()]
+            v_afp = to_float_num(t_afp)
+            v_sis = to_float_num(t_sis)
+            v_ind = to_float_num(t_indep)
+            if v_afp is not None:
+                vals[f"tasa_afp_{key}"] = v_afp
+            if v_sis is not None:
+                vals[f"tasa_sis_{key}"] = v_sis
+            if v_ind is not None:
+                vals[f"tasa_independiente_{key}"] = v_ind
+
+        # --- 8) Asignación Familiar (montos y topes)
+        # Montos:
+        # "1 (A) $ 22.007 ...", "2 (B) $ 13.505 ...", "3 (C) $ 4.267 ..."
+        mA = re.search(r"\b1\s*\(A\)\s*\$\s*([\d\.,]+)", txt, re.I)
+        mB = re.search(r"\b2\s*\(B\)\s*\$\s*([\d\.,]+)", txt, re.I)
+        mC = re.search(r"\b3\s*\(C\)\s*\$\s*([\d\.,]+)", txt, re.I)
+        if mA: 
+            v = to_float_num(mA.group(1));  vals['asignacion_familiar_monto_a'] = v if v is not None else vals.get('asignacion_familiar_monto_a')
+        if mB:
+            v = to_float_num(mB.group(1));  vals['asignacion_familiar_monto_b'] = v if v is not None else vals.get('asignacion_familiar_monto_b')
+        if mC:
+            v = to_float_num(mC.group(1));  vals['asignacion_familiar_monto_c'] = v if v is not None else vals.get('asignacion_familiar_monto_c')
+        # Topes renta:
+        # "Renta <= $ 620.251" (A), "Renta > $ 620.251 <= $ 905.941" (B), "Renta > $ 905.941 <= $ 1.412.957" (C)
+        tA = re.search(r"A\)\s*\$?\s*([\d\.,]+)\s*", txt, re.I)  # primer umbral
+        tB = re.search(r"B\).*?\$\s*([\d\.,]+)\s*", txt, re.I)   # segundo umbral
+        tC = re.search(r"C\).*?\$\s*([\d\.,]+)\s*", txt, re.I)   # tercer umbral
+        if tA:
+            v = to_float_num(tA.group(1))
+            if v is not None:
+                vals['asignacion_familiar_primer'] = v
+        if tB:
+            v = to_float_num(tB.group(1))
+            if v is not None:
+                vals['asignacion_familiar_segundo'] = v
+        if tC:
+            v = to_float_num(tC.group(1))
+            if v is not None:
+                vals['asignacion_familiar_tercer'] = v
+
+        if vals:
+            self.write(vals)
+
 
 
 
