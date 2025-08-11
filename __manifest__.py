@@ -43,7 +43,6 @@
         # Add 'hr_payroll_account' if accounting integration from payroll is needed
     ],
     # always loaded
-    'external_dependencies': {'python': ['pypdf']},
     
     # always loaded
     'data': [
@@ -103,7 +102,7 @@
         # 'demo/demo.xml', # Add demo data if needed
     ],
     'external_dependencies': {
-        'python': ['requests', 'beautifulsoup4'],
+        'python': ['requests', 'beautifulsoup4','pypdf', 'bs4'],
     },
     'installable': True,
     'application': True, # Set to True if it's a main application
