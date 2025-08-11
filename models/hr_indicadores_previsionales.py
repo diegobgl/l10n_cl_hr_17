@@ -386,3 +386,11 @@ class HrIndicadores(models.Model):
 
         if vals:
             self.write(vals)
+
+    def action_done(self):
+            self.write({'state': 'done'})
+            return True
+
+    def action_draft(self):
+        self.write({'state': 'draft'})
+        return True
