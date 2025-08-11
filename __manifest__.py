@@ -42,7 +42,9 @@
         'resource',
         # Add 'hr_payroll_account' if accounting integration from payroll is needed
     ],
-
+    # always loaded
+    'external_dependencies': {'python': ['pypdf']},
+    
     # always loaded
     'data': [
         # Security
