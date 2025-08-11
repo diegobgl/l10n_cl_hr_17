@@ -15,7 +15,7 @@ class HrPayslip(models.Model):
     indicadores_id = fields.Many2one(
         'hr.indicadores',
         string='Indicadores Previsionales',
-        readonly=True,
+        readonly=False,
         # Make it required if not computing/defaulting reliably
         required=True,
         copy=False,
