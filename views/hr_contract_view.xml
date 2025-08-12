@@ -1,171 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="view_hr_contract_form_chile" model="ir.ui.view">
-    <field name="name">hr.contract.chile.form</field>
+  <!-- Contract View (v17-ready) -->
+  <record id="hr_contract_chile_view" model="ir.ui.view">
+    <field name="name">hr.contract.chile.view</field>
     <field name="model">hr.contract</field>
     <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
     <field name="arch" type="xml">
 
-      <!-- Añadir todo al final de la pestaña Información salarial, respetando el bloque nativo -->
+      <!-- Bloque CHILE después del sueldo (no comprimimos el wage) -->
+      <xpath expr="//div[@name='wage']" position="after">
+        <label for="otros_imp"/>
+        <div name="otros_imp_row" class="o_row mw-50">
+          <field name="otros_imp" nolabel="1" class="oe_inline o_hr_narrow_field"/>
+          <div class="mb-3">/ mes</div>
+        </div>
+
+        <label for="otro_no_imp"/>
+        <div name="otro_no_imp_row" class="o_row mw-50">
+          <field name="otro_no_imp" nolabel="1" class="oe_inline o_hr_narrow_field"/>
+          <div class="mb-3">/ mes</div>
+        </div>
+
+        <label for="colacion"/>
+        <div name="colacion_row" class="o_row mw-50">
+          <field name="colacion" nolabel="1" class="oe_inline o_hr_narrow_field"/>
+          <div class="mb-3">/ mes</div>
+        </div>
+
+        <label for="movilizacion"/>
+        <div name="movilizacion_row" class="o_row mw-50">
+          <field name="movilizacion" nolabel="1" class="oe_inline o_hr_narrow_field"/>
+          <div class="mb-3">/ mes</div>
+        </div>
+
+        <label for="viatico_santiago"/>
+        <div name="viatico_santiago_row" class="o_row mw-50">
+          <field name="viatico_santiago" nolabel="1" class="oe_inline o_hr_narrow_field"/>
+          <div class="mb-3">/ mes</div>
+        </div>
+
+        <label for="anticipo_sueldo"/>
+        <div name="anticipo_sueldo_row" class="o_row mw-50">
+          <field name="anticipo_sueldo" nolabel="1" class="oe_inline o_hr_narrow_field"/>
+          <div class="mb-3">/ mes</div>
+        </div>
+
+        <label for="gratificacion_legal"/>
+        <div name="gratificacion_legal_row" class="o_row mw-50">
+          <field name="gratificacion_legal" nolabel="1" class="oe_inline o_hr_narrow_field"/>
+        </div>
+      </xpath>
+
+      <!-- OJO: en v17 no uses position="replace" solo para meter attrs inválidos.
+           Si quieres defaults/domains, hazlo vía contexto o en el modelo. -->
+      <!-- (Eliminados los replace de type_id/journal_id/resource_calendar_id) -->
+
+      <!-- Páginas adicionales (nombres únicos, sin duplicar 'information') -->
+      <xpath expr="//page[@name='information']" position="after">
+
+        <!-- Carga Familiar -->
+        <page string="Carga Familiar" name="carga_familiar">
+          <group>
+            <field name="carga_familiar" string="Carga Simple"/>
+            <field name="carga_familiar_maternal" string="Carga Maternal"/>
+            <field name="carga_familiar_invalida" string="Carga Inválida"/>
+          </group>
+        </page>
+
+        <!-- Salud -->
+        <page string="Salud" name="health">
+          <group>
+            <label for="isapre_id" string="ISAPRE"/>
+            <div>
+              <field name="isapre_id" string="ISAPRE"/>
+            </div>
+
+            <label for="isapre_moneda" invisible="not isapre_id"/>
+            <div invisible="not isapre_id">
+              <field name="isapre_moneda"/>
+            </div>
+
+            <label for="isapre_cotizacion_uf" string="Cotización Pactada" invisible="not isapre_id"/>
+            <div invisible="not isapre_id">
+              <field name="isapre_cotizacion_uf" string="Cotización"/>
+            </div>
+
+            <label for="isapre_fun" invisible="not isapre_id"/>
+            <div invisible="not isapre_id">
+              <field name="isapre_fun"/>
+            </div>
+
+            <label for="isapre_cuenta_propia" invisible="not isapre_id"/>
+            <div invisible="not isapre_id">
+              <field name="isapre_cuenta_propia"/>
+            </div>
+          </group>
+
+          <group string="Seguro Complementario">
+            <label for="seguro_complementario_id"/>
+            <div>
+              <field name="seguro_complementario_id"/>
+            </div>
+
+            <label for="seguro_complementario_moneda"/>
+            <div>
+              <field name="seguro_complementario_moneda"/>
+            </div>
+
+            <label for="seguro_complementario" string="Cotización Pactada"/>
+            <div>
+              <field name="seguro_complementario" string="Cotización"/>
+            </div>
+          </group>
+        </page>
+
+        <!-- Fondos de Pensión -->
+        <page string="Fondos de Pensión" name="afp">
+          <group string="AFP">
+            <label for="pension"/>
+            <div><field name="pension"/></div>
+
+            <label for="sin_afp"/>
+            <div><field name="sin_afp"/></div>
+
+            <label for="sin_afp_sis"/>
+            <div><field name="sin_afp_sis"/></div>
+
+            <!-- Mostrar AFP solo cuando corresponda (v17: expresión inline) -->
+            <label for="afp_id" invisible="not pension or sin_afp"/>
+            <div invisible="not pension or sin_afp">
+              <field name="afp_id" string="AFP" required="pension and not sin_afp"/>
+            </div>
+          </group>
+
+          <group string="Aporte Previsional Voluntario">
+            <label for="apv_id" string="Institución APV/APVC"/>
+            <div><field name="apv_id"/></div>
+
+            <label for="aporte_voluntario_moneda" string="Tipo Moneda"/>
+            <div><field name="aporte_voluntario_moneda"/></div>
+
+            <label for="aporte_voluntario" string="Aporte Voluntario"/>
+            <div><field name="aporte_voluntario"/></div>
+
+            <label for="forma_pago_apv" string="Forma de Pago"/>
+            <div><field name="forma_pago_apv"/></div>
+          </group>
+        </page>
+
+      </xpath>
+
+      <!-- (Opcional) Indicadores por contrato, si ya añadiste los campos en el modelo -->
+      <!--
       <xpath expr="//page[@name='information']" position="inside">
-        <separator string="Componentes Chile"/>
-
-        <group name="cl_extra_components">
-          <!-- ====== Otros Haberes ====== -->
-          <label for="otros_imp"/>
-          <div class="o_row mw-50" name="otros_imp_row">
-            <field name="otros_imp" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-            <div class="mb-3">/ mes</div>
-          </div>
-
-          <label for="otro_no_imp"/>
-          <div class="o_row mw-50" name="otro_no_imp_row">
-            <field name="otro_no_imp" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-            <div class="mb-3">/ mes</div>
-          </div>
-
-          <label for="colacion"/>
-          <div class="o_row mw-50" name="colacion_row">
-            <field name="colacion" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-            <div class="mb-3">/ mes</div>
-          </div>
-
-          <label for="movilizacion"/>
-          <div class="o_row mw-50" name="movilizacion_row">
-            <field name="movilizacion" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-            <div class="mb-3">/ mes</div>
-          </div>
-
-          <label for="viatico_santiago"/>
-          <div class="o_row mw-50" name="viatico_santiago_row">
-            <field name="viatico_santiago" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-            <div class="mb-3">/ mes</div>
-          </div>
-
-          <label for="anticipo_sueldo"/>
-          <div class="o_row mw-50" name="anticipo_sueldo_row">
-            <field name="anticipo_sueldo" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-            <div class="mb-3">/ mes</div>
-          </div>
-
-          <label for="gratificacion_legal"/>
-          <div class="o_row mw-50" name="gratificacion_legal_row">
-            <field name="gratificacion_legal" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-          </div>
-
-          <!-- ====== Cargas Familiares ====== -->
-          <separator string="Cargas Familiares"/>
-          <label for="carga_familiar"/>
-          <div class="o_row mw-50" name="carga_familiar_row">
-            <field name="carga_familiar" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-          </div>
-
-          <label for="carga_familiar_maternal"/>
-          <div class="o_row mw-50" name="carga_familiar_maternal_row">
-            <field name="carga_familiar_maternal" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-          </div>
-
-          <label for="carga_familiar_invalida"/>
-          <div class="o_row mw-50" name="carga_familiar_invalida_row">
-            <field name="carga_familiar_invalida" class="oe_inline o_hr_narrow_field" nolabel="1"/>
-          </div>
-
-          <!-- ====== Salud (ISAPRE/FONASA) ====== -->
-          <separator string="Salud"/>
-          <label for="isapre_id"/>
-          <div class="o_row mw-50" name="isapre_id_row">
-            <field name="isapre_id" nolabel="1"/>
-          </div>
-
-          <label for="isapre_moneda" invisible="not isapre_id"/>
-          <div class="o_row mw-50" name="isapre_moneda_row" invisible="not isapre_id">
-            <field name="isapre_moneda" nolabel="1"/>
-          </div>
-
-          <label for="isapre_cotizacion_uf" invisible="not isapre_id"/>
-          <div class="o_row mw-50" name="isapre_cotizacion_uf_row" invisible="not isapre_id">
-            <field name="isapre_cotizacion_uf" nolabel="1"/>
-          </div>
-
-          <label for="isapre_fun" invisible="not isapre_id"/>
-          <div class="o_row mw-50" name="isapre_fun_row" invisible="not isapre_id">
-            <field name="isapre_fun" nolabel="1"/>
-          </div>
-
-          <label for="isapre_cuenta_propia" invisible="not isapre_id"/>
-          <div class="o_row mw-50" name="isapre_cuenta_propia_row" invisible="not isapre_id">
-            <field name="isapre_cuenta_propia" nolabel="1"/>
-          </div>
-
-          <!-- ====== Seguro Complementario ====== -->
-          <separator string="Seguro Complementario"/>
-          <label for="seguro_complementario_id"/>
-          <div class="o_row mw-50" name="seguro_complementario_id_row">
-            <field name="seguro_complementario_id" nolabel="1"/>
-          </div>
-
-          <label for="seguro_complementario_moneda"/>
-          <div class="o_row mw-50" name="seguro_complementario_moneda_row">
-            <field name="seguro_complementario_moneda" nolabel="1"/>
-          </div>
-
-          <label for="seguro_complementario"/>
-          <div class="o_row mw-50" name="seguro_complementario_row">
-            <field name="seguro_complementario" nolabel="1"/>
-          </div>
-
-          <!-- ====== Fondos de Pensión (AFP) ====== -->
-          <separator string="Fondos de Pensión (AFP)"/>
-          <label for="pension"/>
-          <div class="o_row mw-50" name="pension_row">
-            <field name="pension" nolabel="1"/>
-          </div>
-
-          <label for="sin_afp"/>
-          <div class="o_row mw-50" name="sin_afp_row">
-            <field name="sin_afp" nolabel="1"/>
-          </div>
-
-          <label for="sin_afp_sis"/>
-          <div class="o_row mw-50" name="sin_afp_sis_row">
-            <field name="sin_afp_sis" nolabel="1"/>
-          </div>
-
-          <label for="afp_id" attrs="{'invisible': [('sin_afp','=', True)]}"/>
-          <div class="o_row mw-50" name="afp_id_row" attrs="{'invisible': [('sin_afp','=', True)]}">
-            <field name="afp_id" nolabel="1"/>
-          </div>
-
-          <!-- ====== APV ====== -->
-          <separator string="Ahorro Previsional Voluntario (APV)"/>
-          <label for="apv_id"/>
-          <div class="o_row mw-50" name="apv_id_row">
-            <field name="apv_id" nolabel="1"/>
-          </div>
-
-          <label for="aporte_voluntario_moneda"/>
-          <div class="o_row mw-50" name="aporte_voluntario_moneda_row">
-            <field name="aporte_voluntario_moneda" nolabel="1"/>
-          </div>
-
-          <label for="aporte_voluntario"/>
-          <div class="o_row mw-50" name="aporte_voluntario_row">
-            <field name="aporte_voluntario" nolabel="1"/>
-          </div>
-
-          <label for="forma_pago_apv"/>
-          <div class="o_row mw-50" name="forma_pago_apv_row">
-            <field name="forma_pago_apv" nolabel="1"/>
-          </div>
-
-          <!-- (Opcional) Otros -->
-          <separator string="Otros"/>
-          <label for="mutual_seguridad"/>
-          <div class="o_row mw-50" name="mutual_seguridad_row">
-            <field name="mutual_seguridad" nolabel="1"/>
-          </div>
+        <separator string="Indicadores Previsionales"/>
+        <group col="2">
+          <field name="use_indicadores_by_period"/>
+          <field name="indicadores_default_id" invisible="use_indicadores_by_period"/>
         </group>
       </xpath>
+      -->
 
     </field>
   </record>
