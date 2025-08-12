@@ -11,8 +11,8 @@
 
         <!-- poner en el DOM los campos usados en el domain -->
         <xpath expr="//sheet" position="inside">
-          <field name="year_domain" invisible="1"/>
-          <field name="month_domain" invisible="1"/>
+          <field name="year_domain" invisible="0"/>
+          <field name="month_domain" invisible="0"/>
         </xpath>
 
         <!-- Insertar indicadores y un credit_note invisible para no romper modifiers nativos -->
