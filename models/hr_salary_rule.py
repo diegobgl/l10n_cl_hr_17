@@ -11,27 +11,20 @@ class HrSalaryRule(models.Model):
     date_end = fields.Date('Válido Hasta', help="Regla activa hasta esta fecha (inclusive).")
 
     # Override _satisfy_condition to include date checks
-    def _satisfy_condition(self, payslip_dict):
+    def _satisfy_condition(self, localdict):
         """
-        Checks if the rule condition is satisfied, including date validity checks.
-        :param payslip_dict: Dictionary containing payslip values (contract, employee, payslip obj etc.)
-        :return: True if the rule conditions and date validity are met, False otherwise.
+        En Odoo, localdict['payslip'] es un recordset hr.payslip (no un dict).
+        Copiamos date_from/date_to al localdict si faltan y delegamos al super.
         """
-        self.ensure_one()
-        # First, check date validity
-        payslip_date = payslip_dict.get('payslip', {}).get('date_to') or payslip_dict.get('date_to')
-        if not payslip_date:
-             # Cannot determine validity without a date, maybe default to True or log a warning?
-             # Let's assume it's not satisfied if date is unknown.
-             return False
+        try:
+            payslip = localdict.get('payslip') if isinstance(localdict, dict) else None
+            if payslip:
+                if 'date_from' not in localdict and hasattr(payslip, 'date_from'):
+                    localdict['date_from'] = payslip.date_from
+                if 'date_to' not in localdict and hasattr(payslip, 'date_to'):
+                    localdict['date_to'] = payslip.date_to
+        except Exception:
+            # no romper la evaluación de reglas si algo falla
+            pass
 
-        # Convert payslip_date to date object if it's string or datetime
-        payslip_date_obj = fields.Date.to_date(payslip_date)
-
-        if self.date_start and payslip_date_obj < self.date_start:
-            return False # Rule hasn't started yet
-        if self.date_end and payslip_date_obj > self.date_end:
-            return False # Rule has ended
-
-        # If date conditions are met, proceed with the original condition check
-        return super(HrSalaryRule, self)._satisfy_condition(payslip_dict)
+        return super()._satisfy_condition(localdict)
