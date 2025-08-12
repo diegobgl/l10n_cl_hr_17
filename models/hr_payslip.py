@@ -71,3 +71,20 @@ class HrPayslip(models.Model):
             ], limit=1)
             if rec:
                 self.indicadores_id = rec.id
+
+    @api.onchange('employee_id', 'date_from', 'date_to')
+    def _onchange_employee_dates_set_contract_and_structure(self):
+        for slip in self:
+            if not slip.employee_id or not slip.date_from or not slip.date_to:
+                continue
+            contract = self.env['hr.contract'].search([
+                ('employee_id', '=', slip.employee_id.id),
+                ('state', 'in', ['open', 'close']),
+                ('date_start', '<=', slip.date_to),
+                '|', ('date_end', '=', False), ('date_end', '>=', slip.date_from),
+            ], order='date_start desc', limit=1)
+            if contract:
+                slip.contract_id = contract.id  # si usas contract_id
+                struct = contract.structure_type_id.default_struct_id or contract.structure_id
+                if struct:
+                    slip.struct_id = struct.id
