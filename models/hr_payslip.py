@@ -77,15 +77,34 @@ class HrPayslip(models.Model):
         for slip in self:
             if not slip.employee_id or not slip.date_from or not slip.date_to:
                 continue
+
             contract = self.env['hr.contract'].search([
                 ('employee_id', '=', slip.employee_id.id),
                 ('state', 'in', ['open', 'close']),
                 ('date_start', '<=', slip.date_to),
                 '|', ('date_end', '=', False), ('date_end', '>=', slip.date_from),
             ], order='date_start desc', limit=1)
-            if contract:
-                slip.contract_id = contract.id  # si usas contract_id
-                struct = contract.structure_type_id.default_struct_id if contract and contract.structure_type_id else False
-                self.struct_id = struct
-                if contract and contract.structure_type_id:
-                    self.structure_type_id = contract.structure_type_id
+
+            if not contract:
+                continue
+
+            # asigna el contrato
+            slip.contract_id = contract
+
+            # elige estructura compatible según lo disponible
+            struct = False
+            if 'structure_type_id' in contract._fields and contract.structure_type_id:
+                # v14+ (con tipos de estructura)
+                struct = contract.structure_type_id.default_struct_id or False
+
+            if not struct and 'struct_id' in contract._fields:
+                # fallback para versiones que usan struct_id en el contrato
+                struct = contract.struct_id
+
+            if struct:
+                slip.struct_id = struct
+
+            # solo asigna structure_type_id si el campo EXISTE en hr.payslip
+            if 'structure_type_id' in slip._fields and \
+            'structure_type_id' in contract._fields and contract.structure_type_id:
+                slip.structure_type_id = contract.structure_type_id
