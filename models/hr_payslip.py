@@ -85,6 +85,7 @@ class HrPayslip(models.Model):
             ], order='date_start desc', limit=1)
             if contract:
                 slip.contract_id = contract.id  # si usas contract_id
-                struct = contract.structure_type_id.default_struct_id or contract.structure_id
-                if struct:
-                    slip.struct_id = struct.id
+                struct = contract.structure_type_id.default_struct_id if contract and contract.structure_type_id else False
+                self.struct_id = struct
+                if contract and contract.structure_type_id:
+                    self.structure_type_id = contract.structure_type_id
