@@ -108,3 +108,8 @@ class HrPayslip(models.Model):
             if 'structure_type_id' in slip._fields and \
             'structure_type_id' in contract._fields and contract.structure_type_id:
                 slip.structure_type_id = contract.structure_type_id
+
+    def _get_salary_line_total(self, code):
+        self.ensure_one()
+        line = self.line_ids.filtered(lambda l: l.code == code)[:1]
+        return int(round(line.total)) if line else 0# -----

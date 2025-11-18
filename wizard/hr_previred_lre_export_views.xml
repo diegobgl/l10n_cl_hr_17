@@ -1,0 +1,41 @@
+<odoo>
+  <record id="view_hr_previred_lre_export_wizard" model="ir.ui.view">
+    <field name="name">hr.previred.lre.export.wizard.form</field>
+    <field name="model">hr.previred.lre.export.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Exportación PREVIRED / LRE">
+        <group>
+          <field name="company_id"/>
+          <group>
+            <field name="period_month"/>
+            <field name="period_year"/>
+          </group>
+          <group>
+            <field name="export_type"/>
+            <field name="include_zip"/>
+          </group>
+          <group>
+            <field name="structure_id"/>
+            <field name="analytic_account_id"/>
+          </group>
+        </group>
+        <footer>
+          <button string="Generar Archivo" type="object" name="action_export" class="btn-primary"/>
+          <button string="Cancelar" class="btn-secondary" special="cancel"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_hr_previred_lre_export" model="ir.actions.act_window">
+    <field name="name">Exportar PREVIRED / LRE</field>
+    <field name="res_model">hr.previred.lre.export.wizard</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+  </record>
+
+  <!-- Menú en Nómina > Informes (ajusta a tu árbol) -->
+  <menuitem id="menu_hr_cl_exports_root" name="Exportaciones CL" parent="hr_payroll.menu_hr_payroll_reporting_root"/>
+  <menuitem id="menu_hr_previred_lre_export" name="PREVIRED / LRE" parent="menu_hr_cl_exports_root"
+            action="action_hr_previred_lre_export"/>
+</odoo>
