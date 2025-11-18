@@ -223,7 +223,7 @@ result = monto * cargas
       <field name="name">Bruto</field>
       <field name="code">BRUTO</field>
       <field name="sequence">900</field>
-      <field name="category_id" ref="hr_salary_rule_category_bruto"/>
+      <field name="category_id" ref="hr_salary_rule_category_chile"/>
       <field name="struct_id" ref="hr_pay_structure_chile"/>
       <field name="condition_select">none</field>
       <field name="amount_select">code</field>
@@ -242,7 +242,7 @@ result = total
       <field name="name">Salario neto</field>
       <field name="code">NETO</field>
       <field name="sequence">910</field>
-      <field name="category_id" ref="hr_salary_rule_category_neto"/>
+      <field name="category_id" ref="hr_salary_rule_category_chile"/>
       <field name="struct_id" ref="hr_pay_structure_chile"/>
       <field name="condition_select">none</field>
       <field name="amount_select">code</field>
