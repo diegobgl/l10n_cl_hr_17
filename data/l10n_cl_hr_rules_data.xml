@@ -218,7 +218,7 @@ result = monto * cargas
       ]]></field>
     </record>
 
-    <!-- Total Bruto -->
+    <!-- Total Bruto (usa el objeto rules, no payslip.line_ids) -->
     <record id="hr_salary_rule_chile_bruto" model="hr.salary.rule">
       <field name="name">Bruto</field>
       <field name="code">BRUTO</field>
@@ -228,16 +228,16 @@ result = monto * cargas
       <field name="condition_select">none</field>
       <field name="amount_select">code</field>
       <field name="amount_python_compute"><![CDATA[
-total = 0.0
-for line in payslip.line_ids:
-    # Haberes: ajustar lista según agregues nuevas reglas de ingreso
-    if line.code in ('SUELDO', 'GRATIFICACION', 'COLACION', 'MOVILIZACION', 'ASIGFAM'):
-        total += line.total
-result = total
+# rules.X devuelve el total de la regla con código X (0 si no existe)
+result = (rules.SUELDO +
+          rules.GRATIFICACION +
+          rules.COLACION +
+          rules.MOVILIZACION +
+          rules.ASIGFAM)
       ]]></field>
     </record>
 
-    <!-- Salario Neto -->
+    <!-- Salario Neto (usa BRUTO y descuentos legales del trabajador) -->
     <record id="hr_salary_rule_chile_neto" model="hr.salary.rule">
       <field name="name">Salario neto</field>
       <field name="code">NETO</field>
@@ -247,18 +247,12 @@ result = total
       <field name="condition_select">none</field>
       <field name="amount_select">code</field>
       <field name="amount_python_compute"><![CDATA[
-bruto = 0.0
-descuentos = 0.0
-
-for line in payslip.line_ids:
-    if line.code == 'BRUTO':
-        bruto = line.total
-    # Descuentos legales trabajador
-    if line.code in ('AFP', 'SIS', 'SALUD', 'SC_TRAB'):
-        descuentos += line.total  # son negativos
-
-# Neto = bruto + descuentos (negativos)
-result = bruto + descuentos
+# Descuentos son negativos, así que suman restando
+result = (rules.BRUTO +
+          rules.AFP +
+          rules.SIS +
+          rules.SALUD +
+          rules.SC_TRAB)
       ]]></field>
     </record>
 
