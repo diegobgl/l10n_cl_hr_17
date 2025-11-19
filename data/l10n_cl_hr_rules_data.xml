@@ -207,16 +207,21 @@ result = (contract.movilizacion or 0.0) if contract else 0.0
     <field name="struct_id" ref="hr_pay_structure_chile"/>
     <field name="amount_select">code</field>
 
-    <!-- Condición: que el empleado tenga cargas familiares > 0 -->
+    <!-- Condición: que el contrato tenga cargas familiares > 0 -->
     <field name="condition_select">python</field>
     <field name="condition_python"><![CDATA[
-result = bool(employee and employee.family_dependents and employee.family_dependents > 0)
+result = bool(contract and contract.carga_familiar and contract.carga_familiar > 0)
     ]]></field>
 
     <field name="amount_python_compute"><![CDATA[
 indic = payslip.indicadores_id if payslip else False
-cargas = employee.family_dependents if (employee and employee.family_dependents) else 0
-monto = (indic.asignacion_familiar_monto_a if (indic and indic.asignacion_familiar_monto_a) else 0.0)
+
+# número de cargas desde el contrato
+cargas = contract.carga_familiar if (contract and contract.carga_familiar) else 0
+
+# monto por carga (tramo A, ajusta si usas otro)
+monto = indic.asignacion_familiar_monto_a if (indic and indic.asignacion_familiar_monto_a) else 0.0
+
 result = monto * cargas
     ]]></field>
   </record>
