@@ -226,9 +226,8 @@ result = monto * cargas
     ]]></field>
   </record>
 
-
-    <!-- Total Bruto (usa el objeto rules, no payslip.line_ids) -->
-    <record id="hr_salary_rule_chile_bruto" model="hr.salary.rule">
+    <!-- Total Bruto (usa rules.get, no atributos) -->
+  <record id="hr_salary_rule_chile_bruto" model="hr.salary.rule">
       <field name="name">Bruto</field>
       <field name="code">BRUTO</field>
       <field name="sequence">900</field>
@@ -237,17 +236,19 @@ result = monto * cargas
       <field name="condition_select">none</field>
       <field name="amount_select">code</field>
       <field name="amount_python_compute"><![CDATA[
-# rules.X devuelve el total de la regla con código X (0 si no existe)
-result = (rules.SUELDO +
-          rules.GRATIFICACION +
-          rules.COLACION +
-          rules.MOVILIZACION +
-          rules.ASIGFAM)
+# rules.get('CODE', 0.0) devuelve el total de la regla CODE ya calculada
+result = (
+    rules.get('SUELDO', 0.0)
+  + rules.get('GRATIFICACION', 0.0)
+  + rules.get('COLACION', 0.0)
+  + rules.get('MOVILIZACION', 0.0)
+  + rules.get('ASIGFAM', 0.0)
+)
       ]]></field>
     </record>
 
-    <!-- Salario Neto (usa BRUTO y descuentos legales del trabajador) -->
-    <record id="hr_salary_rule_chile_neto" model="hr.salary.rule">
+    <!-- Salario Neto (Bruto + descuentos legales del trabajador) -->
+  <record id="hr_salary_rule_chile_neto" model="hr.salary.rule">
       <field name="name">Salario neto</field>
       <field name="code">NETO</field>
       <field name="sequence">910</field>
@@ -256,14 +257,17 @@ result = (rules.SUELDO +
       <field name="condition_select">none</field>
       <field name="amount_select">code</field>
       <field name="amount_python_compute"><![CDATA[
-# Descuentos son negativos, así que suman restando
-result = (rules.BRUTO +
-          rules.AFP +
-          rules.SIS +
-          rules.SALUD +
-          rules.SC_TRAB)
+# Descuentos (AFP, SIS, SALUD, SC_TRAB) son negativos
+result = (
+    rules.get('BRUTO', 0.0)
+  + rules.get('AFP', 0.0)
+  + rules.get('SIS', 0.0)
+  + rules.get('SALUD', 0.0)
+  + rules.get('SC_TRAB', 0.0)
+)
       ]]></field>
-    </record>
+  </record>
+
 
   </data>
 </odoo>
