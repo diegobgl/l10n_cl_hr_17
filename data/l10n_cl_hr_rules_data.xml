@@ -198,25 +198,29 @@ result = (contract.movilizacion or 0.0) if contract else 0.0
       ]]></field>
     </record>
 
-    <!-- Asignación Familiar -->
-    <record id="hr_salary_rule_chile_asig_familiar" model="hr.salary.rule">
-      <field name="name">Asignación Familiar</field>
-      <field name="code">ASIGFAM</field>
-      <field name="sequence">55</field>
-      <field name="category_id" ref="hr_salary_rule_category_chile"/>
-      <field name="struct_id" ref="hr_pay_structure_chile"/>
-      <field name="amount_select">code</field>
-      <field name="condition_select">python</field>
-      <field name="condition_python"><![CDATA[
-result = bool(employee and getattr(employee, 'family_dependents', 0) > 0)
-      ]]></field>
-      <field name="amount_python_compute"><![CDATA[
+  <!-- Asignación Familiar -->
+  <record id="hr_salary_rule_chile_asig_familiar" model="hr.salary.rule">
+    <field name="name">Asignación Familiar</field>
+    <field name="code">ASIGFAM</field>
+    <field name="sequence">55</field>
+    <field name="category_id" ref="hr_salary_rule_category_chile"/>
+    <field name="struct_id" ref="hr_pay_structure_chile"/>
+    <field name="amount_select">code</field>
+
+    <!-- Condición: que el empleado tenga cargas familiares > 0 -->
+    <field name="condition_select">python</field>
+    <field name="condition_python"><![CDATA[
+result = bool(employee and employee.family_dependents and employee.family_dependents > 0)
+    ]]></field>
+
+    <field name="amount_python_compute"><![CDATA[
 indic = payslip.indicadores_id if payslip else False
-cargas = getattr(employee, 'family_dependents', 0) if employee else 0
+cargas = employee.family_dependents if (employee and employee.family_dependents) else 0
 monto = (indic.asignacion_familiar_monto_a if (indic and indic.asignacion_familiar_monto_a) else 0.0)
 result = monto * cargas
-      ]]></field>
-    </record>
+    ]]></field>
+  </record>
+
 
     <!-- Total Bruto (usa el objeto rules, no payslip.line_ids) -->
     <record id="hr_salary_rule_chile_bruto" model="hr.salary.rule">
