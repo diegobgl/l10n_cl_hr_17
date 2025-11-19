@@ -226,7 +226,7 @@ result = monto * cargas
     ]]></field>
   </record>
 
-    <!-- Total Bruto (usa rules.get, no atributos) -->
+    <!-- Total Bruto -->
   <record id="hr_salary_rule_chile_bruto" model="hr.salary.rule">
       <field name="name">Bruto</field>
       <field name="code">BRUTO</field>
@@ -236,18 +236,35 @@ result = monto * cargas
       <field name="condition_select">none</field>
       <field name="amount_select">code</field>
       <field name="amount_python_compute"><![CDATA[
-# rules.get('CODE', 0.0) devuelve el total de la regla CODE ya calculada
-result = (
-    rules.get('SUELDO', 0.0)
-  + rules.get('GRATIFICACION', 0.0)
-  + rules.get('COLACION', 0.0)
-  + rules.get('MOVILIZACION', 0.0)
-  + rules.get('ASIGFAM', 0.0)
-)
+wage = (contract.wage or 0.0) if contract else 0.0
+indic = payslip.indicadores_id if payslip else False
+
+# Sueldo base
+sueldo = wage
+
+# Gratificación legal
+grat = 0.0
+if indic and indic.gratificacion_legal:
+    base25 = wage * 0.25
+    tope = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = base25 if (tope == 0.0 or base25 <= tope) else tope
+
+# Colación
+colacion = contract.colacion if (contract and contract.colacion) else 0.0
+
+# Movilización
+mov = contract.movilizacion if (contract and contract.movilizacion) else 0.0
+
+# Asignación familiar (mismas reglas que ASIGFAM)
+cargas = contract.carga_familiar if (contract and contract.carga_familiar) else 0
+monto_asig = indic.asignacion_familiar_monto_a if (indic and indic.asignacion_familiar_monto_a) else 0.0
+asigfam = monto_asig * cargas
+
+result = sueldo + grat + colacion + mov + asigfam
       ]]></field>
     </record>
 
-    <!-- Salario Neto (Bruto + descuentos legales del trabajador) -->
+    <!-- Salario Neto -->
   <record id="hr_salary_rule_chile_neto" model="hr.salary.rule">
       <field name="name">Salario neto</field>
       <field name="code">NETO</field>
@@ -257,16 +274,72 @@ result = (
       <field name="condition_select">none</field>
       <field name="amount_select">code</field>
       <field name="amount_python_compute"><![CDATA[
-# Descuentos (AFP, SIS, SALUD, SC_TRAB) son negativos
-result = (
-    rules.get('BRUTO', 0.0)
-  + rules.get('AFP', 0.0)
-  + rules.get('SIS', 0.0)
-  + rules.get('SALUD', 0.0)
-  + rules.get('SC_TRAB', 0.0)
-)
+wage = (contract.wage or 0.0) if contract else 0.0
+indic = payslip.indicadores_id if payslip else False
+
+# ===== BRUTO (mismo cálculo que regla BRUTO) =====
+sueldo = wage
+
+grat = 0.0
+if indic and indic.gratificacion_legal:
+    base25 = wage * 0.25
+    tope = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = base25 if (tope == 0.0 or base25 <= tope) else tope
+
+colacion = contract.colacion if (contract and contract.colacion) else 0.0
+mov = contract.movilizacion if (contract and contract.movilizacion) else 0.0
+
+cargas = contract.carga_familiar if (contract and contract.carga_familiar) else 0
+monto_asig = indic.asignacion_familiar_monto_a if (indic and indic.asignacion_familiar_monto_a) else 0.0
+asigfam = monto_asig * cargas
+
+bruto = sueldo + grat + colacion + mov + asigfam
+
+# ===== DESCUENTOS LEGALES TRABAJADOR =====
+
+# AFP
+afp_base = wage
+if indic and indic.tope_imponible_afp and indic.uf:
+    tope_afp = indic.tope_imponible_afp * indic.uf
+    if afp_base > tope_afp:
+        afp_base = tope_afp
+tasa_afp = indic.tasa_afp_capital if (indic and indic.tasa_afp_capital) else 0.0
+afp = -(afp_base * (tasa_afp / 100.0))
+
+# SIS
+sis_base = wage
+if indic and indic.tope_imponible_afp and indic.uf:
+    tope_afp = indic.tope_imponible_afp * indic.uf
+    if sis_base > tope_afp:
+        sis_base = tope_afp
+tasa_sis = indic.tasa_sis_capital if (indic and indic.tasa_sis_capital) else 0.0
+sis = -(sis_base * (tasa_sis / 100.0))
+
+# Salud
+salud_base = wage
+if indic and indic.tope_imponible_salud and indic.uf:
+    tope_salud = indic.tope_imponible_salud * indic.uf
+    if salud_base > tope_salud:
+        salud_base = tope_salud
+tasa_salud = 7.0
+if indic and indic.fonasa:
+    tasa_salud = indic.fonasa
+salud = -(salud_base * (tasa_salud / 100.0))
+
+# Seguro cesantía trabajador
+sc_base = wage
+if indic and indic.tope_imponible_seguro_cesantia and indic.uf:
+    tope_sc = indic.tope_imponible_seguro_cesantia * indic.uf
+    if sc_base > tope_sc:
+        sc_base = tope_sc
+tasa_sc = indic.contrato_plazo_indefinido_trabajador if (indic and indic.contrato_plazo_indefinido_trabajador) else 0.0
+sc_trab = -(sc_base * (tasa_sc / 100.0))
+
+# ===== NETO =====
+result = bruto + afp + sis + salud + sc_trab
       ]]></field>
   </record>
+
 
 
   </data>
