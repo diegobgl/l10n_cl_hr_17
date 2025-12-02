@@ -148,45 +148,38 @@ result = -(imponible * (tasa / 100.0))
       <field name="condition_select">none</field>
       <field name="amount_python_compute"><![CDATA[
 result = 0.0
-wage = (contract.wage or 0.0) if contract else 0.0
 indic = payslip.indicadores_id if payslip else False
 
-# Gratificación legal
-grat = 0.0
-if indic and indic.gratificacion_legal:
-    base25 = wage * 0.25
-    tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-    if tope_grat == 0.0 or base25 <= tope_grat:
-        grat = base25
-    else:
-        grat = tope_grat
+# Base imponible real = todos los haberes imponibles
+imponible = categories.BRUTO or 0.0
 
-imponible = wage + grat
-
-# Tope Salud
-if indic and indic.tope_imponible_salud and indic.uf:
-    tope_salud = indic.tope_imponible_salud * indic.uf
-    if imponible > tope_salud:
-        imponible = tope_salud
-
-# Isapre: usar plan pactado, salvo que el contrato indique que lo paga directo
-if contract and contract.isapre_id:
-    if contract.isapre_cuenta_propia:
-        result = 0.0
-    else:
-        plan = contract.isapre_cotizacion_uf or 0.0
-        if contract.isapre_moneda == 'uf':
-            if indic and indic.uf:
-                plan = plan * indic.uf
-            else:
-                plan = 0.0
-        result = -plan
+if not imponible:
+    result = 0.0
 else:
-    # Fonasa
-    tasa = 7.0
-    if indic and indic.fonasa:
-        tasa = indic.fonasa
-    result = -(imponible * (tasa / 100.0))
+    # Tope Salud en UF
+    if indic and indic.tope_imponible_salud and indic.uf:
+        tope_salud = indic.tope_imponible_salud * indic.uf
+        if tope_salud:
+            imponible = min(imponible, tope_salud)
+
+    if contract and contract.isapre_id:
+        # mismo bloque isapre que ya tienes
+        if contract.isapre_cuenta_propia:
+            result = 0.0
+        else:
+            plan = contract.isapre_cotizacion_uf or 0.0
+            if contract.isapre_moneda == 'uf':
+                if indic and indic.uf:
+                    plan = plan * indic.uf
+                else:
+                    plan = 0.0
+            result = -plan
+    else:
+        # Fonasa
+        tasa = 7.0
+        if indic and indic.fonasa:
+            tasa = indic.fonasa
+        result = -(imponible * (tasa / 100.0))
       ]]></field>
     </record>
 
