@@ -229,19 +229,28 @@ if indic and indic.tope_imponible_seguro_cesantia and indic.uf:
         imponible = tope_sc
 
 # Tipo de contrato (indefinido / plazo_fijo)
-tipo_contrato = getattr(contract, 'tipo_contrato', 'indefinido') if contract else 'indefinido'
+tipo_contrato = 'indefinido'
+if contract:
+    try:
+        if contract.tipo_contrato:
+            tipo_contrato = contract.tipo_contrato
+    except Exception:
+        tipo_contrato = 'indefinido'
 
 tasa = 0.0
 if indic:
-    if tipo_contrato == 'indefinido':
-        tasa = getattr(indic, 'contrato_plazo_indefinido_trabajador', 0.0)
-    elif tipo_contrato == 'plazo_fijo':
-        # trabajador plazo fijo: usualmente 0%
-        tasa = getattr(indic, 'contrato_plazo_fijo_trabajador', 0.0)
+    try:
+        if tipo_contrato == 'indefinido' and indic.contrato_plazo_indefinido_trabajador:
+            tasa = indic.contrato_plazo_indefinido_trabajador or 0.0
+        elif tipo_contrato == 'plazo_fijo' and indic.contrato_plazo_fijo_trabajador:
+            tasa = indic.contrato_plazo_fijo_trabajador or 0.0
+    except Exception:
+        tasa = 0.0
 
 result = -(imponible * (tasa / 100.0))
       ]]></field>
     </record>
+
 
     <!-- Seguro Cesantía Empleador (AFC Empleador) -->
     <record id="hr_salary_rule_chile_sc_empleador" model="hr.salary.rule">
@@ -280,16 +289,23 @@ if indic and indic.tope_imponible_seguro_cesantia and indic.uf:
         imponible = tope_sc
 
 # Tipo de contrato (indefinido / plazo_fijo)
-tipo_contrato = getattr(contract, 'tipo_contrato', 'indefinido') if contract else 'indefinido'
+tipo_contrato = 'indefinido'
+if contract:
+    try:
+        if contract.tipo_contrato:
+            tipo_contrato = contract.tipo_contrato
+    except Exception:
+        tipo_contrato = 'indefinido'
 
 tasa = 0.0
 if indic:
-    if tipo_contrato == 'indefinido':
-        # típicamente 2,4% empleador
-        tasa = getattr(indic, 'contrato_plazo_indefinido_empleador', 0.0)
-    elif tipo_contrato == 'plazo_fijo':
-        # típicamente 3% empleador plazo fijo
-        tasa = getattr(indic, 'contrato_plazo_fijo_empleador', 0.0)
+    try:
+        if tipo_contrato == 'indefinido' and indic.contrato_plazo_indefinido_empleador:
+            tasa = indic.contrato_plazo_indefinido_empleador or 0.0
+        elif tipo_contrato == 'plazo_fijo' and indic.contrato_plazo_fijo_empleador:
+            tasa = indic.contrato_plazo_fijo_empleador or 0.0
+    except Exception:
+        tasa = 0.0
 
 result = -(imponible * (tasa / 100.0))
       ]]></field>
@@ -525,14 +541,26 @@ else:
 # AFC trabajador
 afc_trab = 0.0
 if not (contract and (contract.pension or contract.sin_afp)):
-    tipo_contrato = getattr(contract, 'tipo_contrato', 'indefinido') if contract else 'indefinido'
+    tipo_contrato = 'indefinido'
+    if contract:
+        try:
+            if contract.tipo_contrato:
+                tipo_contrato = contract.tipo_contrato
+        except Exception:
+            tipo_contrato = 'indefinido'
+
     tasa_sc_trab = 0.0
     if indic:
-        if tipo_contrato == 'indefinido':
-            tasa_sc_trab = getattr(indic, 'contrato_plazo_indefinido_trabajador', 0.0)
-        elif tipo_contrato == 'plazo_fijo':
-            tasa_sc_trab = getattr(indic, 'contrato_plazo_fijo_trabajador', 0.0)
+        try:
+            if tipo_contrato == 'indefinido' and indic.contrato_plazo_indefinido_trabajador:
+                tasa_sc_trab = indic.contrato_plazo_indefinido_trabajador or 0.0
+            elif tipo_contrato == 'plazo_fijo' and indic.contrato_plazo_fijo_trabajador:
+                tasa_sc_trab = indic.contrato_plazo_fijo_trabajador or 0.0
+        except Exception:
+            tasa_sc_trab = 0.0
+
     afc_trab = -(imponible_sc * (tasa_sc_trab / 100.0))
+
 
 # (OJO: SIS y AFC empleador NO se incluyen en el neto)
 result = bruto + afp + salud + afc_trab
