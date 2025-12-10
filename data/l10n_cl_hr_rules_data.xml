@@ -133,6 +133,7 @@ if contract and contract.afp_id and contract.afp_id.sis:
 elif indic and indic.tasa_sis_capital:
     tasa = indic.tasa_sis_capital
 
+# Aporte empleador (no se usa en NETO)
 result = -(imponible * (tasa / 100.0))
       ]]></field>
     </record>
@@ -227,9 +228,16 @@ if indic and indic.tope_imponible_seguro_cesantia and indic.uf:
     if imponible > tope_sc:
         imponible = tope_sc
 
+# Tipo de contrato (indefinido / plazo_fijo)
+tipo_contrato = getattr(contract, 'tipo_contrato', 'indefinido') if contract else 'indefinido'
+
 tasa = 0.0
-if indic and indic.contrato_plazo_indefinido_trabajador:
-    tasa = indic.contrato_plazo_indefinido_trabajador
+if indic:
+    if tipo_contrato == 'indefinido':
+        tasa = getattr(indic, 'contrato_plazo_indefinido_trabajador', 0.0)
+    elif tipo_contrato == 'plazo_fijo':
+        # trabajador plazo fijo: usualmente 0%
+        tasa = getattr(indic, 'contrato_plazo_fijo_trabajador', 0.0)
 
 result = -(imponible * (tasa / 100.0))
       ]]></field>
@@ -271,9 +279,17 @@ if indic and indic.tope_imponible_seguro_cesantia and indic.uf:
     if imponible > tope_sc:
         imponible = tope_sc
 
+# Tipo de contrato (indefinido / plazo_fijo)
+tipo_contrato = getattr(contract, 'tipo_contrato', 'indefinido') if contract else 'indefinido'
+
 tasa = 0.0
-if indic and indic.contrato_plazo_indefinido_empleador:
-    tasa = indic.contrato_plazo_indefinido_empleador
+if indic:
+    if tipo_contrato == 'indefinido':
+        # típicamente 2,4% empleador
+        tasa = getattr(indic, 'contrato_plazo_indefinido_empleador', 0.0)
+    elif tipo_contrato == 'plazo_fijo':
+        # típicamente 3% empleador plazo fijo
+        tasa = getattr(indic, 'contrato_plazo_fijo_empleador', 0.0)
 
 result = -(imponible * (tasa / 100.0))
       ]]></field>
@@ -509,9 +525,13 @@ else:
 # AFC trabajador
 afc_trab = 0.0
 if not (contract and (contract.pension or contract.sin_afp)):
+    tipo_contrato = getattr(contract, 'tipo_contrato', 'indefinido') if contract else 'indefinido'
     tasa_sc_trab = 0.0
-    if indic and indic.contrato_plazo_indefinido_trabajador:
-        tasa_sc_trab = indic.contrato_plazo_indefinido_trabajador
+    if indic:
+        if tipo_contrato == 'indefinido':
+            tasa_sc_trab = getattr(indic, 'contrato_plazo_indefinido_trabajador', 0.0)
+        elif tipo_contrato == 'plazo_fijo':
+            tasa_sc_trab = getattr(indic, 'contrato_plazo_fijo_trabajador', 0.0)
     afc_trab = -(imponible_sc * (tasa_sc_trab / 100.0))
 
 # (OJO: SIS y AFC empleador NO se incluyen en el neto)
