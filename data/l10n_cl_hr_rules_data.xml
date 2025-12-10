@@ -194,62 +194,53 @@ else:
 
     <!-- Seguro Cesantía Trabajador (AFC) -->
     <record id="hr_salary_rule_chile_sc_trabajador" model="hr.salary.rule">
-      <field name="name">Seguro Cesantía Trabajador</field>
-      <field name="code">SC_TRAB</field>
-      <field name="sequence">35</field>
-      <field name="category_id" ref="hr_salary_rule_category_chile"/>
-      <field name="struct_id" ref="hr_pay_structure_chile"/>
-      <field name="amount_select">code</field>
-      <field name="condition_select">python</field>
-      <field name="condition_python"><![CDATA[
-# No AFC trabajador para pensionados o sin AFP
-result = not (contract and (contract.pension or contract.sin_afp))
-      ]]></field>
-      <field name="amount_python_compute"><![CDATA[
+    <field name="name">Seguro Cesantía Trabajador</field>
+    <field name="code">SC_TRAB</field>
+    <field name="sequence">35</field>
+    <field name="category_id" ref="hr_salary_rule_category_chile"/>
+    <field name="struct_id" ref="hr_pay_structure_chile"/>
+    <field name="amount_select">code</field>
+    <!-- SIEMPRE SE EVALÚA -->
+    <field name="condition_select">none</field>
+    <field name="amount_python_compute"><![CDATA[
 result = 0.0
 wage = (contract.wage or 0.0) if contract else 0.0
 indic = payslip.indicadores_id if payslip else False
 
-# Gratificación legal
-grat = 0.0
-if indic and indic.gratificacion_legal:
-    base25 = wage * 0.25
-    tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-    if tope_grat == 0.0 or base25 <= tope_grat:
-        grat = base25
-    else:
-        grat = tope_grat
-
-imponible = wage + grat
-
-# Tope AFC
-if indic and indic.tope_imponible_seguro_cesantia and indic.uf:
-    tope_sc = indic.tope_imponible_seguro_cesantia * indic.uf
-    if imponible > tope_sc:
-        imponible = tope_sc
-
-# Tipo de contrato (indefinido / plazo_fijo)
-tipo_contrato = 'indefinido'
-if contract:
+if not (contract and indic):
+    result = 0.0
+else:
+    # Si es pensionado o sin AFP, no paga AFC
     try:
-        if contract.tipo_contrato:
-            tipo_contrato = contract.tipo_contrato
-    except Exception:
-        tipo_contrato = 'indefinido'
+        if contract.pension or contract.sin_afp:
+            result = 0.0
+        else:
+            # Gratificación legal
+            grat = 0.0
+            if indic.gratificacion_legal:
+                base25 = wage * 0.25
+                tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
+                if tope_grat == 0.0 or base25 <= tope_grat:
+                    grat = base25
+                else:
+                    grat = tope_grat
 
-tasa = 0.0
-if indic:
-    try:
-        if tipo_contrato == 'indefinido' and indic.contrato_plazo_indefinido_trabajador:
+            imponible = wage + grat
+
+            # Tope AFC
+            if indic.tope_imponible_seguro_cesantia and indic.uf:
+                tope_sc = indic.tope_imponible_seguro_cesantia * indic.uf
+                if imponible > tope_sc:
+                    imponible = tope_sc
+
+            # Por ahora, usamos siempre tasa indefinido (0,6%)
             tasa = indic.contrato_plazo_indefinido_trabajador or 0.0
-        elif tipo_contrato == 'plazo_fijo' and indic.contrato_plazo_fijo_trabajador:
-            tasa = indic.contrato_plazo_fijo_trabajador or 0.0
+            result = -(imponible * (tasa / 100.0))
     except Exception:
-        tasa = 0.0
-
-result = -(imponible * (tasa / 100.0))
-      ]]></field>
+        result = 0.0
+    ]]></field>
     </record>
+
 
 
     <!-- Seguro Cesantía Empleador (AFC Empleador) -->
