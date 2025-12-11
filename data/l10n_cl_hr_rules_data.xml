@@ -192,17 +192,17 @@ else:
       ]]></field>
     </record>
 
-    <!-- Seguro Cesantía Trabajador (AFC) -->
-    <record id="hr_salary_rule_chile_sc_trabajador" model="hr.salary.rule">
-    <field name="name">Seguro Cesantía Trabajador</field>
-    <field name="code">SC_TRAB</field>
-    <field name="sequence">35</field>
-    <field name="category_id" ref="hr_salary_rule_category_chile"/>
-    <field name="struct_id" ref="hr_pay_structure_chile"/>
-    <field name="amount_select">code</field>
-    <!-- SIEMPRE SE EVALÚA -->
-    <field name="condition_select">none</field>
-    <field name="amount_python_compute"><![CDATA[
+<!-- Seguro Cesantía Trabajador (AFC) -->
+<record id="hr_salary_rule_chile_sc_trabajador" model="hr.salary.rule">
+  <field name="name">Seguro Cesantía Trabajador</field>
+  <field name="code">SC_TRAB</field>
+  <field name="sequence">35</field>
+  <field name="category_id" ref="hr_salary_rule_category_chile"/>
+  <field name="struct_id" ref="hr_pay_structure_chile"/>
+  <field name="amount_select">code</field>
+  <!-- SIEMPRE SE EVALÚA -->
+  <field name="condition_select">none</field>
+  <field name="amount_python_compute"><![CDATA[
 result = 0.0
 wage = (contract.wage or 0.0) if contract else 0.0
 indic = payslip.indicadores_id if payslip else False
@@ -238,8 +238,8 @@ else:
             result = -(imponible * (tasa / 100.0))
     except Exception:
         result = 0.0
-    ]]></field>
-    </record>
+  ]]></field>
+</record>
 
 
 
@@ -531,26 +531,19 @@ else:
 
 # AFC trabajador
 afc_trab = 0.0
-if not (contract and (contract.pension or contract.sin_afp)):
-    tipo_contrato = 'indefinido'
-    if contract:
-        try:
-            if contract.tipo_contrato:
-                tipo_contrato = contract.tipo_contrato
-        except Exception:
-            tipo_contrato = 'indefinido'
+if contract and indic:
+    try:
+        if not (contract.pension or contract.sin_afp):
+            imponible_sc = imponible
+            if indic.tope_imponible_seguro_cesantia and indic.uf:
+                tope_sc = indic.tope_imponible_seguro_cesantia * indic.uf
+                if imponible_sc > tope_sc:
+                    imponible_sc = tope_sc
+            tasa_sc_trab = indic.contrato_plazo_indefinido_trabajador or 0.0
+            afc_trab = -(imponible_sc * (tasa_sc_trab / 100.0))
+    except Exception:
+        afc_trab = 0.0
 
-    tasa_sc_trab = 0.0
-    if indic:
-        try:
-            if tipo_contrato == 'indefinido' and indic.contrato_plazo_indefinido_trabajador:
-                tasa_sc_trab = indic.contrato_plazo_indefinido_trabajador or 0.0
-            elif tipo_contrato == 'plazo_fijo' and indic.contrato_plazo_fijo_trabajador:
-                tasa_sc_trab = indic.contrato_plazo_fijo_trabajador or 0.0
-        except Exception:
-            tasa_sc_trab = 0.0
-
-    afc_trab = -(imponible_sc * (tasa_sc_trab / 100.0))
 
 
 # (OJO: SIS y AFC empleador NO se incluyen en el neto)
