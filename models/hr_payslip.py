@@ -42,6 +42,10 @@ class HrPayslip(models.Model):
     # -------- Defaults / Onchange --------
     @api.model
     def _default_indicadores(self):
+        context_indicator = self.env.context.get('default_indicadores_id') or self.env.context.get('indicadores_id')
+        if context_indicator:
+            return context_indicator
+
         date_from = self.env.context.get('default_date_from') or self.env.context.get('date_from') or fields.Date.context_today(self)
         df = fields.Date.to_date(date_from)
         month = str(df.month)
@@ -62,15 +66,22 @@ class HrPayslip(models.Model):
 
     @api.onchange('date_from', 'date_to')
     def _onchange_period_set_indicadores(self):
-        if self.date_from:
-            df = fields.Date.to_date(self.date_from)
+        for slip in self:
+            if not slip.date_from:
+                continue
+
+            if slip.payslip_run_id and slip.payslip_run_id.indicadores_id:
+                slip.indicadores_id = slip.payslip_run_id.indicadores_id
+                continue
+
+            df = fields.Date.to_date(slip.date_from)
             rec = self.env['hr.indicadores'].search([
                 ('month', '=', str(df.month)),
-                ('year',  '=', df.year),
+                ('year', '=', df.year),
                 ('state', '=', 'done')
             ], limit=1)
             if rec:
-                self.indicadores_id = rec.id
+                slip.indicadores_id = rec.id
 
     @api.onchange('employee_id', 'date_from', 'date_to')
     def _onchange_employee_dates_set_contract_and_structure(self):

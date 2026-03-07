@@ -61,6 +61,12 @@ class HrContract(models.Model):
     pension = fields.Boolean('Pensionado', help="Indicar si el empleado es pensionado.", tracking=True)
     sin_afp = fields.Boolean('No Cotiza AFP', help="Marcar si el empleado no debe cotizar en AFP (ej. extranjero con convenio).", tracking=True)
     sin_afp_sis = fields.Boolean('No Calcular SIS Empleador', help="Marcar si no corresponde calcular el aporte SIS del empleador (ej. pensionado que cotiza).", tracking=True)
+    tipo_contrato = fields.Selection([
+        ('indefinido', 'Indefinido'),
+        ('plazo_fijo', 'Plazo Fijo'),
+    ], string='Tipo Plazo Contrato', default='indefinido', tracking=True,
+        help="Determina la tasa de Seguro de Cesantía aplicable (plazo fijo: empleador 3%, trabajador 0%)."
+    )
     seguro_complementario_id = fields.Many2one('hr.seguro.complementario', string='Seguro Complementario', tracking=True)
     seguro_complementario = fields.Float(
         'Cotización Seguro Comp. (UF/CLP)',
@@ -129,6 +135,4 @@ class HrContract(models.Model):
     @api.depends('employee_id.name')
     def _compute_complete_name(self):
         for contract in self:
-            first = contract.employee_id.name or ""
-            last = contract.last_name or ""
-            contract.complete_name = f"{first} {last}".strip()
+            contract.complete_name = contract.employee_id.name or ""

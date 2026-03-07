@@ -2,6 +2,32 @@
 <odoo>
   <data noupdate="0">
 
+    <!-- ============================================================
+         HELPER: Base Imponible Previsional (wage + gratificación)
+         Usado como referencia en exportaciones Previred/LRE.
+         ============================================================ -->
+    <record id="hr_salary_rule_chile_imponible" model="hr.salary.rule">
+      <field name="name">Base Imponible Previsional</field>
+      <field name="code">IMPONIBLE</field>
+      <field name="sequence">8</field>
+      <field name="category_id" ref="hr_salary_rule_category_chile"/>
+      <field name="struct_id" ref="hr_pay_structure_chile"/>
+      <field name="amount_select">code</field>
+      <field name="condition_select">none</field>
+      <field name="amount_python_compute"><![CDATA[
+wage = (contract.wage or 0.0) if contract else 0.0
+indic = payslip.indicadores_id if payslip else False
+
+grat = 0.0
+if indic and indic.gratificacion_legal:
+    base25 = wage * 0.25
+    tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = min(base25, tope_grat) if tope_grat else base25
+
+result = wage + grat
+      ]]></field>
+    </record>
+
     <!-- Sueldo Base -->
     <record id="hr_salary_rule_chile_sueldo_base" model="hr.salary.rule">
       <field name="name">Sueldo Base</field>
@@ -35,11 +61,8 @@ indic = payslip.indicadores_id if payslip else False
 grat = 0.0
 if indic and indic.gratificacion_legal:
     base25 = wage * 0.25
-    tope = (indic.utm * 4.75) if (indic.utm) else 0.0
-    if tope == 0.0 or base25 <= tope:
-        grat = base25
-    else:
-        grat = tope
+    tope = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = min(base25, tope) if tope else base25
 
 result = grat
       ]]></field>
@@ -55,43 +78,31 @@ result = grat
       <field name="amount_select">code</field>
       <field name="condition_select">python</field>
       <field name="condition_python"><![CDATA[
-# No calcular AFP si el contrato está marcado como sin_afp
 result = not (contract and contract.sin_afp)
       ]]></field>
       <field name="amount_python_compute"><![CDATA[
-result = 0.0
 wage = (contract.wage or 0.0) if contract else 0.0
 indic = payslip.indicadores_id if payslip else False
 
-# Gratificación legal (mismo cálculo que la regla GRAT)
 grat = 0.0
 if indic and indic.gratificacion_legal:
     base25 = wage * 0.25
-    tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-    if tope_grat == 0.0 or base25 <= tope_grat:
-        grat = base25
-    else:
-        grat = tope_grat
+    tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = min(base25, tope_grat) if tope_grat else base25
 
-# Imponible previsional
 imponible = wage + grat
 
-# Tope imponible AFP en pesos
 if indic and indic.tope_imponible_afp and indic.uf:
     tope_afp = indic.tope_imponible_afp * indic.uf
     if imponible > tope_afp:
         imponible = tope_afp
 
-# Tasa de AFP desde el contrato
-tasa = 0.0
-if contract and contract.afp_id and contract.afp_id.rate:
-    tasa = contract.afp_id.rate
-
+tasa = (contract.afp_id.rate or 0.0) if (contract and contract.afp_id) else 0.0
 result = -(imponible * (tasa / 100.0))
       ]]></field>
     </record>
 
-    <!-- SIS (aporte empleador, usa tasa SIS AFP) -->
+    <!-- SIS (aporte empleador) -->
     <record id="hr_salary_rule_chile_sis" model="hr.salary.rule">
       <field name="name">SIS Empleador</field>
       <field name="code">SIS</field>
@@ -101,27 +112,20 @@ result = -(imponible * (tasa / 100.0))
       <field name="amount_select">code</field>
       <field name="condition_select">python</field>
       <field name="condition_python"><![CDATA[
-# Permite desactivar SIS por contrato si está marcado sin_afp_sis
 result = not (contract and contract.sin_afp_sis)
       ]]></field>
       <field name="amount_python_compute"><![CDATA[
-result = 0.0
 wage = (contract.wage or 0.0) if contract else 0.0
 indic = payslip.indicadores_id if payslip else False
 
-# Gratificación legal
 grat = 0.0
 if indic and indic.gratificacion_legal:
     base25 = wage * 0.25
-    tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-    if tope_grat == 0.0 or base25 <= tope_grat:
-        grat = base25
-    else:
-        grat = tope_grat
+    tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = min(base25, tope_grat) if tope_grat else base25
 
 imponible = wage + grat
 
-# Tope AFP
 if indic and indic.tope_imponible_afp and indic.uf:
     tope_afp = indic.tope_imponible_afp * indic.uf
     if imponible > tope_afp:
@@ -133,7 +137,6 @@ if contract and contract.afp_id and contract.afp_id.sis:
 elif indic and indic.tasa_sis_capital:
     tasa = indic.tasa_sis_capital
 
-# Aporte empleador (no se usa en NETO)
 result = -(imponible * (tasa / 100.0))
       ]]></field>
     </record>
@@ -148,61 +151,46 @@ result = -(imponible * (tasa / 100.0))
       <field name="amount_select">code</field>
       <field name="condition_select">none</field>
       <field name="amount_python_compute"><![CDATA[
-result = 0.0
 wage = (contract.wage or 0.0) if contract else 0.0
 indic = payslip.indicadores_id if payslip else False
 
-# Base imponible: sueldo + gratificación legal
 grat = 0.0
 if indic and indic.gratificacion_legal:
     base25 = wage * 0.25
-    tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-    if tope_grat == 0.0 or base25 <= tope_grat:
-        grat = base25
-    else:
-        grat = tope_grat
+    tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = min(base25, tope_grat) if tope_grat else base25
 
 imponible = wage + grat
 
-# Tope Salud en UF
 if indic and indic.tope_imponible_salud and indic.uf:
     tope_salud = indic.tope_imponible_salud * indic.uf
     if imponible > tope_salud:
         imponible = tope_salud
 
-# Isapre / Fonasa
 if contract and contract.isapre_id:
-    # Isapre
     if contract.isapre_cuenta_propia:
         result = 0.0
     else:
         plan = contract.isapre_cotizacion_uf or 0.0
         if contract.isapre_moneda == 'uf':
-            if indic and indic.uf:
-                plan = plan * indic.uf
-            else:
-                plan = 0.0
+            plan = plan * (indic.uf or 0.0) if indic else 0.0
         result = -plan
 else:
-    # Fonasa
-    tasa = 7.0
-    if indic and indic.fonasa:
-        tasa = indic.fonasa
+    tasa = (indic.fonasa or 7.0) if indic else 7.0
     result = -(imponible * (tasa / 100.0))
       ]]></field>
     </record>
 
-<!-- Seguro Cesantía Trabajador (AFC) -->
-<record id="hr_salary_rule_chile_sc_trabajador" model="hr.salary.rule">
-  <field name="name">Seguro Cesantía Trabajador</field>
-  <field name="code">SC_TRAB</field>
-  <field name="sequence">35</field>
-  <field name="category_id" ref="hr_salary_rule_category_chile"/>
-  <field name="struct_id" ref="hr_pay_structure_chile"/>
-  <field name="amount_select">code</field>
-  <!-- SIEMPRE SE EVALÚA -->
-  <field name="condition_select">none</field>
-  <field name="amount_python_compute"><![CDATA[
+    <!-- Seguro Cesantía Trabajador (AFC) -->
+    <record id="hr_salary_rule_chile_sc_trabajador" model="hr.salary.rule">
+      <field name="name">Seguro Cesantía Trabajador</field>
+      <field name="code">SC_TRAB</field>
+      <field name="sequence">35</field>
+      <field name="category_id" ref="hr_salary_rule_category_chile"/>
+      <field name="struct_id" ref="hr_pay_structure_chile"/>
+      <field name="amount_select">code</field>
+      <field name="condition_select">none</field>
+      <field name="amount_python_compute"><![CDATA[
 result = 0.0
 wage = (contract.wage or 0.0) if contract else 0.0
 indic = payslip.indicadores_id if payslip else False
@@ -210,38 +198,63 @@ indic = payslip.indicadores_id if payslip else False
 if not (contract and indic):
     result = 0.0
 else:
-    # Si es pensionado o sin AFP, no paga AFC
     try:
-        if contract.pension or contract.sin_afp:
+        # Pensionados y sin AFP no cotizan AFC. Plazo fijo tampoco cotiza trabajador.
+        es_pension = contract.pension or False
+        sin_afp_val = contract.sin_afp or False
+        tipo_contrato = contract.tipo_contrato or 'indefinido'
+
+        if es_pension or sin_afp_val or tipo_contrato == 'plazo_fijo':
             result = 0.0
         else:
-            # Gratificación legal
             grat = 0.0
             if indic.gratificacion_legal:
                 base25 = wage * 0.25
-                tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-                if tope_grat == 0.0 or base25 <= tope_grat:
-                    grat = base25
-                else:
-                    grat = tope_grat
+                tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+                grat = min(base25, tope_grat) if tope_grat else base25
 
             imponible = wage + grat
 
-            # Tope AFC
             if indic.tope_imponible_seguro_cesantia and indic.uf:
                 tope_sc = indic.tope_imponible_seguro_cesantia * indic.uf
                 if imponible > tope_sc:
                     imponible = tope_sc
 
-            # Por ahora, usamos siempre tasa indefinido (0,6%)
             tasa = indic.contrato_plazo_indefinido_trabajador or 0.0
             result = -(imponible * (tasa / 100.0))
     except Exception:
         result = 0.0
-  ]]></field>
-</record>
+      ]]></field>
+    </record>
 
-
+    <!-- APV (descuento trabajador – solo pago indirecto vía planilla) -->
+    <record id="hr_salary_rule_chile_apv" model="hr.salary.rule">
+      <field name="name">APV Trabajador</field>
+      <field name="code">APV</field>
+      <field name="sequence">37</field>
+      <field name="category_id" ref="hr_salary_rule_category_chile"/>
+      <field name="struct_id" ref="hr_pay_structure_chile"/>
+      <field name="amount_select">code</field>
+      <field name="condition_select">python</field>
+      <field name="condition_python"><![CDATA[
+# Solo aplica si el pago es indirecto (empleador descuenta de planilla)
+result = bool(
+    contract and contract.apv_id and contract.aporte_voluntario
+    and contract.forma_pago_apv == '2'
+)
+      ]]></field>
+      <field name="amount_python_compute"><![CDATA[
+result = 0.0
+if not contract:
+    result = 0.0
+else:
+    indic = payslip.indicadores_id if payslip else False
+    monto = contract.aporte_voluntario or 0.0
+    if contract.aporte_voluntario_moneda == 'uf':
+        monto = monto * (indic.uf or 0.0) if indic else 0.0
+    result = -monto if monto > 0 else 0.0
+      ]]></field>
+    </record>
 
     <!-- Seguro Cesantía Empleador (AFC Empleador) -->
     <record id="hr_salary_rule_chile_sc_empleador" model="hr.salary.rule">
@@ -253,52 +266,75 @@ else:
       <field name="amount_select">code</field>
       <field name="condition_select">python</field>
       <field name="condition_python"><![CDATA[
-# Se puede desactivar en caso de exención específica, si se define un flag en contrato
 result = True
       ]]></field>
       <field name="amount_python_compute"><![CDATA[
-result = 0.0
 wage = (contract.wage or 0.0) if contract else 0.0
 indic = payslip.indicadores_id if payslip else False
 
-# Gratificación legal
 grat = 0.0
 if indic and indic.gratificacion_legal:
     base25 = wage * 0.25
-    tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-    if tope_grat == 0.0 or base25 <= tope_grat:
-        grat = base25
-    else:
-        grat = tope_grat
+    tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = min(base25, tope_grat) if tope_grat else base25
 
 imponible = wage + grat
 
-# Tope AFC
 if indic and indic.tope_imponible_seguro_cesantia and indic.uf:
     tope_sc = indic.tope_imponible_seguro_cesantia * indic.uf
     if imponible > tope_sc:
         imponible = tope_sc
 
-# Tipo de contrato (indefinido / plazo_fijo)
 tipo_contrato = 'indefinido'
 if contract:
-    try:
-        if contract.tipo_contrato:
-            tipo_contrato = contract.tipo_contrato
-    except Exception:
-        tipo_contrato = 'indefinido'
+    tipo_contrato = contract.tipo_contrato or 'indefinido'
 
 tasa = 0.0
 if indic:
-    try:
-        if tipo_contrato == 'indefinido' and indic.contrato_plazo_indefinido_empleador:
-            tasa = indic.contrato_plazo_indefinido_empleador or 0.0
-        elif tipo_contrato == 'plazo_fijo' and indic.contrato_plazo_fijo_empleador:
-            tasa = indic.contrato_plazo_fijo_empleador or 0.0
-    except Exception:
-        tasa = 0.0
+    if tipo_contrato == 'plazo_fijo':
+        tasa = indic.contrato_plazo_fijo_empleador or 0.0
+    else:
+        tasa = indic.contrato_plazo_indefinido_empleador or 0.0
 
 result = -(imponible * (tasa / 100.0))
+      ]]></field>
+    </record>
+
+    <!-- Mutual de Seguridad / ISL (aporte empleador, tasa accidente del trabajo) -->
+    <record id="hr_salary_rule_chile_mutual" model="hr.salary.rule">
+      <field name="name">Mutual / ISL Empleador</field>
+      <field name="code">MUTUAL</field>
+      <field name="sequence">43</field>
+      <field name="category_id" ref="hr_salary_rule_category_chile"/>
+      <field name="struct_id" ref="hr_pay_structure_chile"/>
+      <field name="amount_select">code</field>
+      <field name="condition_select">python</field>
+      <field name="condition_python"><![CDATA[
+# Solo si el contrato está afiliado a mutual/ISL
+result = bool(contract and contract.mutual_seguridad)
+      ]]></field>
+      <field name="amount_python_compute"><![CDATA[
+wage = (contract.wage or 0.0) if contract else 0.0
+indic = payslip.indicadores_id if payslip else False
+
+if not indic:
+    result = 0.0
+else:
+    grat = 0.0
+    if indic.gratificacion_legal:
+        base25 = wage * 0.25
+        tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+        grat = min(base25, tope_grat) if tope_grat else base25
+
+    imponible = wage + grat
+
+    # Mutual o ISL según indicadores
+    if indic.mutual_seguridad_bool:
+        tasa = indic.mutual_seguridad or 0.0
+    else:
+        tasa = indic.isl or 0.0
+
+    result = -(imponible * (tasa / 100.0))
       ]]></field>
     </record>
 
@@ -349,36 +385,111 @@ indic = payslip.indicadores_id if payslip else False
 if not (contract and indic):
     result = 0.0
 else:
-    wage = (contract.wage or 0.0)
+    wage = contract.wage or 0.0
+    grat = 0.0
+    if indic.gratificacion_legal:
+        base25 = wage * 0.25
+        tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+        grat = min(base25, tope_grat) if tope_grat else base25
+
+    imponible = wage + grat
+
+    cargas = (
+        (contract.carga_familiar or 0)
+        + (contract.carga_familiar_maternal or 0)
+        + (contract.carga_familiar_invalida or 0)
+    )
+
+    monto_carga = 0.0
+    if imponible <= (indic.asignacion_familiar_primer or 0.0):
+        monto_carga = indic.asignacion_familiar_monto_a or 0.0
+    elif imponible <= (indic.asignacion_familiar_segundo or 0.0):
+        monto_carga = indic.asignacion_familiar_monto_b or 0.0
+    elif imponible <= (indic.asignacion_familiar_tercer or 0.0):
+        monto_carga = indic.asignacion_familiar_monto_c or 0.0
+
+    result = monto_carga * cargas
+      ]]></field>
+    </record>
+
+    <!-- Impuesto Único de Segunda Categoría (Art. 43 N°1 LIR) -->
+    <record id="hr_salary_rule_chile_iut" model="hr.salary.rule">
+      <field name="name">Impuesto Único (Segunda Categoría)</field>
+      <field name="code">IUT</field>
+      <field name="sequence">60</field>
+      <field name="category_id" ref="hr_salary_rule_category_chile"/>
+      <field name="struct_id" ref="hr_pay_structure_chile"/>
+      <field name="amount_select">code</field>
+      <field name="condition_select">none</field>
+      <field name="amount_python_compute"><![CDATA[
+result = 0.0
+wage = (contract.wage or 0.0) if contract else 0.0
+indic = payslip.indicadores_id if payslip else False
+
+if not indic or not indic.utm:
+    result = 0.0
+else:
+    utm = indic.utm
+
     # Gratificación legal
     grat = 0.0
     if indic.gratificacion_legal:
         base25 = wage * 0.25
-        tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-        if tope_grat == 0.0 or base25 <= tope_grat:
-            grat = base25
-        else:
-            grat = tope_grat
+        tope_grat = utm * 4.75
+        grat = min(base25, tope_grat)
 
     imponible = wage + grat
 
-    cargas = (contract.carga_familiar or 0) \
-           + (contract.carga_familiar_maternal or 0) \
-           + (contract.carga_familiar_invalida or 0)
+    # AFP (para deducir de base tributable)
+    afp_ded = 0.0
+    if not (contract and contract.sin_afp):
+        tasa_afp = (contract.afp_id.rate or 0.0) if (contract and contract.afp_id) else 0.0
+        imp_afp = imponible
+        if indic.tope_imponible_afp and indic.uf:
+            imp_afp = min(imp_afp, indic.tope_imponible_afp * indic.uf)
+        afp_ded = imp_afp * (tasa_afp / 100.0)
 
-    monto_carga = 0.0
-    renta = imponible
+    # Salud (siempre 7% del imponible salud como deducción legal, independiente del plan)
+    imp_salud = imponible
+    if indic.tope_imponible_salud and indic.uf:
+        imp_salud = min(imp_salud, indic.tope_imponible_salud * indic.uf)
+    salud_ded = imp_salud * 0.07
 
-    if renta <= (indic.asignacion_familiar_primero or 0.0):
-        monto_carga = indic.asignacion_familiar_monto_a or 0.0
-    elif renta <= (indic.asignacion_familiar_segundo or 0.0):
-        monto_carga = indic.asignacion_familiar_monto_b or 0.0
-    elif renta <= (indic.asignacion_familiar_tercer or 0.0):
-        monto_carga = indic.asignacion_familiar_monto_c or 0.0
+    # AFC trabajador (solo indefinido)
+    afc_ded = 0.0
+    es_pension = (contract.pension or False) if contract else False
+    sin_afp_val = (contract.sin_afp or False) if contract else False
+    tipo_contrato = (contract.tipo_contrato or 'indefinido') if contract else 'indefinido'
+    if not (es_pension or sin_afp_val or tipo_contrato == 'plazo_fijo'):
+        imp_sc = imponible
+        if indic.tope_imponible_seguro_cesantia and indic.uf:
+            imp_sc = min(imp_sc, indic.tope_imponible_seguro_cesantia * indic.uf)
+        tasa_sc = indic.contrato_plazo_indefinido_trabajador or 0.0
+        afc_ded = imp_sc * (tasa_sc / 100.0)
+
+    # Base tributable (renta afecta al impuesto)
+    renta_tributable = max(0.0, imponible - afp_ded - salud_ded - afc_ded)
+
+    # Tabla progresiva Art. 43 N°1 LIR (tramos en UTM mensual)
+    r = renta_tributable / utm
+    if r <= 13.5:
+        iut = 0.0
+    elif r <= 30.0:
+        iut = renta_tributable * 0.04 - 0.54 * utm
+    elif r <= 50.0:
+        iut = renta_tributable * 0.08 - 1.74 * utm
+    elif r <= 70.0:
+        iut = renta_tributable * 0.135 - 4.49 * utm
+    elif r <= 90.0:
+        iut = renta_tributable * 0.23 - 11.14 * utm
+    elif r <= 120.0:
+        iut = renta_tributable * 0.304 - 17.80 * utm
+    elif r <= 150.0:
+        iut = renta_tributable * 0.35 - 23.32 * utm
     else:
-        monto_carga = 0.0
+        iut = renta_tributable * 0.40 - 30.82 * utm
 
-    result = monto_carga * cargas
+    result = -max(0.0, iut)
       ]]></field>
     </record>
 
@@ -395,35 +506,31 @@ else:
 wage = (contract.wage or 0.0) if contract else 0.0
 indic = payslip.indicadores_id if payslip else False
 
-# Gratificación legal
 grat = 0.0
 if indic and indic.gratificacion_legal:
     base25 = wage * 0.25
-    tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-    if tope_grat == 0.0 or base25 <= tope_grat:
-        grat = base25
-    else:
-        grat = tope_grat
+    tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = min(base25, tope_grat) if tope_grat else base25
 
 colacion = (contract.colacion or 0.0) if contract else 0.0
 mov = (contract.movilizacion or 0.0) if contract else 0.0
 
-# Asignación familiar (mismo cálculo que regla ASIGFAM, simplificado)
 asigfam = 0.0
 if contract and indic and (
     contract.carga_familiar or contract.carga_familiar_maternal or contract.carga_familiar_invalida
 ):
     imponible_af = wage + grat
-    cargas = (contract.carga_familiar or 0) \
-           + (contract.carga_familiar_maternal or 0) \
-           + (contract.carga_familiar_invalida or 0)
+    cargas = (
+        (contract.carga_familiar or 0)
+        + (contract.carga_familiar_maternal or 0)
+        + (contract.carga_familiar_invalida or 0)
+    )
     monto_carga = 0.0
-    renta = imponible_af
-    if renta <= (indic.asignacion_familiar_primero or 0.0):
+    if imponible_af <= (indic.asignacion_familiar_primer or 0.0):
         monto_carga = indic.asignacion_familiar_monto_a or 0.0
-    elif renta <= (indic.asignacion_familiar_segundo or 0.0):
+    elif imponible_af <= (indic.asignacion_familiar_segundo or 0.0):
         monto_carga = indic.asignacion_familiar_monto_b or 0.0
-    elif renta <= (indic.asignacion_familiar_tercer or 0.0):
+    elif imponible_af <= (indic.asignacion_familiar_tercer or 0.0):
         monto_carga = indic.asignacion_familiar_monto_c or 0.0
     asigfam = monto_carga * cargas
 
@@ -448,68 +555,52 @@ indic = payslip.indicadores_id if payslip else False
 grat = 0.0
 if indic and indic.gratificacion_legal:
     base25 = wage * 0.25
-    tope_grat = (indic.utm * 4.75) if (indic.utm) else 0.0
-    if tope_grat == 0.0 or base25 <= tope_grat:
-        grat = base25
-    else:
-        grat = tope_grat
+    tope_grat = (indic.utm * 4.75) if indic.utm else 0.0
+    grat = min(base25, tope_grat) if tope_grat else base25
 
 colacion = (contract.colacion or 0.0) if contract else 0.0
 mov = (contract.movilizacion or 0.0) if contract else 0.0
 
-# Asignación familiar
 asigfam = 0.0
 if contract and indic and (
     contract.carga_familiar or contract.carga_familiar_maternal or contract.carga_familiar_invalida
 ):
     imponible_af = wage + grat
-    cargas = (contract.carga_familiar or 0) \
-           + (contract.carga_familiar_maternal or 0) \
-           + (contract.carga_familiar_invalida or 0)
+    cargas = (
+        (contract.carga_familiar or 0)
+        + (contract.carga_familiar_maternal or 0)
+        + (contract.carga_familiar_invalida or 0)
+    )
     monto_carga = 0.0
-    renta = imponible_af
-    if renta <= (indic.asignacion_familiar_primero or 0.0):
+    if imponible_af <= (indic.asignacion_familiar_primer or 0.0):
         monto_carga = indic.asignacion_familiar_monto_a or 0.0
-    elif renta <= (indic.asignacion_familiar_segundo or 0.0):
+    elif imponible_af <= (indic.asignacion_familiar_segundo or 0.0):
         monto_carga = indic.asignacion_familiar_monto_b or 0.0
-    elif renta <= (indic.asignacion_familiar_tercer or 0.0):
+    elif imponible_af <= (indic.asignacion_familiar_tercer or 0.0):
         monto_carga = indic.asignacion_familiar_monto_c or 0.0
     asigfam = monto_carga * cargas
 
 bruto = wage + grat + colacion + mov + asigfam
 
-# ===== BASE IMPONIBLE COMÚN =====
+# ===== BASE IMPONIBLE =====
 imponible = wage + grat
 
 # Tope AFP
 imponible_afp = imponible
 if indic and indic.tope_imponible_afp and indic.uf:
-    tope_afp = indic.tope_imponible_afp * indic.uf
-    if imponible_afp > tope_afp:
-        imponible_afp = tope_afp
+    imponible_afp = min(imponible_afp, indic.tope_imponible_afp * indic.uf)
 
 # Tope Salud
 imponible_salud = imponible
 if indic and indic.tope_imponible_salud and indic.uf:
-    tope_salud = indic.tope_imponible_salud * indic.uf
-    if imponible_salud > tope_salud:
-        imponible_salud = tope_salud
-
-# Tope AFC
-imponible_sc = imponible
-if indic and indic.tope_imponible_seguro_cesantia and indic.uf:
-    tope_sc = indic.tope_imponible_seguro_cesantia * indic.uf
-    if imponible_sc > tope_sc:
-        imponible_sc = tope_sc
+    imponible_salud = min(imponible_salud, indic.tope_imponible_salud * indic.uf)
 
 # ===== DESCUENTOS TRABAJADOR =====
 
 # AFP
 afp = 0.0
 if not (contract and contract.sin_afp):
-    tasa_afp = 0.0
-    if contract and contract.afp_id and contract.afp_id.rate:
-        tasa_afp = contract.afp_id.rate
+    tasa_afp = (contract.afp_id.rate or 0.0) if (contract and contract.afp_id) else 0.0
     afp = -(imponible_afp * (tasa_afp / 100.0))
 
 # Salud
@@ -518,36 +609,64 @@ if contract and contract.isapre_id:
     if not contract.isapre_cuenta_propia:
         plan = contract.isapre_cotizacion_uf or 0.0
         if contract.isapre_moneda == 'uf':
-            if indic and indic.uf:
-                plan = plan * indic.uf
-            else:
-                plan = 0.0
+            plan = plan * (indic.uf or 0.0) if indic else 0.0
         salud = -plan
 else:
-    tasa_salud = 7.0
-    if indic and indic.fonasa:
-        tasa_salud = indic.fonasa
+    tasa_salud = (indic.fonasa or 7.0) if indic else 7.0
     salud = -(imponible_salud * (tasa_salud / 100.0))
 
 # AFC trabajador
 afc_trab = 0.0
-if contract and indic:
+es_pension = (contract.pension or False) if contract else False
+sin_afp_val = (contract.sin_afp or False) if contract else False
+tipo_contrato = (contract.tipo_contrato or 'indefinido') if contract else 'indefinido'
+if contract and indic and not (es_pension or sin_afp_val or tipo_contrato == 'plazo_fijo'):
     try:
-        if not (contract.pension or contract.sin_afp):
-            imponible_sc = imponible
-            if indic.tope_imponible_seguro_cesantia and indic.uf:
-                tope_sc = indic.tope_imponible_seguro_cesantia * indic.uf
-                if imponible_sc > tope_sc:
-                    imponible_sc = tope_sc
-            tasa_sc_trab = indic.contrato_plazo_indefinido_trabajador or 0.0
-            afc_trab = -(imponible_sc * (tasa_sc_trab / 100.0))
+        imponible_sc = imponible
+        if indic.tope_imponible_seguro_cesantia and indic.uf:
+            imponible_sc = min(imponible_sc, indic.tope_imponible_seguro_cesantia * indic.uf)
+        tasa_sc_trab = indic.contrato_plazo_indefinido_trabajador or 0.0
+        afc_trab = -(imponible_sc * (tasa_sc_trab / 100.0))
     except Exception:
         afc_trab = 0.0
 
+# APV (descuento indirecto)
+apv = 0.0
+if contract and contract.apv_id and contract.aporte_voluntario and contract.forma_pago_apv == '2':
+    monto_apv = contract.aporte_voluntario or 0.0
+    if contract.aporte_voluntario_moneda == 'uf':
+        monto_apv = monto_apv * (indic.uf or 0.0) if indic else 0.0
+    apv = -monto_apv
 
+# IUT (Impuesto Único de Segunda Categoría – Art. 43 N°1 LIR)
+iut = 0.0
+if indic and indic.utm:
+    utm = indic.utm
+    afp_ded = abs(afp)
+    salud_ded = imponible_salud * 0.07  # siempre 7% legal como deducción de base IUT
+    afc_ded = abs(afc_trab)
+    renta_tributable = max(0.0, imponible - afp_ded - salud_ded - afc_ded)
+    r = renta_tributable / utm
+    if r <= 13.5:
+        iut_bruto = 0.0
+    elif r <= 30.0:
+        iut_bruto = renta_tributable * 0.04 - 0.54 * utm
+    elif r <= 50.0:
+        iut_bruto = renta_tributable * 0.08 - 1.74 * utm
+    elif r <= 70.0:
+        iut_bruto = renta_tributable * 0.135 - 4.49 * utm
+    elif r <= 90.0:
+        iut_bruto = renta_tributable * 0.23 - 11.14 * utm
+    elif r <= 120.0:
+        iut_bruto = renta_tributable * 0.304 - 17.80 * utm
+    elif r <= 150.0:
+        iut_bruto = renta_tributable * 0.35 - 23.32 * utm
+    else:
+        iut_bruto = renta_tributable * 0.40 - 30.82 * utm
+    iut = -max(0.0, iut_bruto)
 
-# (OJO: SIS y AFC empleador NO se incluyen en el neto)
-result = bruto + afp + salud + afc_trab
+# (SIS, AFC empleador y Mutual NO se incluyen en el neto del trabajador)
+result = bruto + afp + salud + afc_trab + apv + iut
       ]]></field>
     </record>
 

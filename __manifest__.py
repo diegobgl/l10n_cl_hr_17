@@ -32,7 +32,7 @@
     # any module necessary for this one to work correctly
     'depends': [
         'base',
-        'hr_work_entry_contract_enterprise',
+        'hr_work_entry_contract_enterprise',  # Requiere Odoo Enterprise
         'hr',
         'hr_contract',
         'hr_holidays',
@@ -68,7 +68,7 @@
         'views/hr_contribution_register_view.xml', # Inherits hr_payroll view
 
         # Wizards
-        # 'wizard/wizard_export_csv_previred_view.xml',
+        'wizard/hr_previred_lre_export_views.xml',
         # 'report/hr_salary_books.xml', # Contains wizard view for salary book
 
         # Reports
@@ -102,7 +102,7 @@
         # 'demo/demo.xml', # Add demo data if needed
     ],
     'external_dependencies': {
-        'python': ['requests', 'beautifulsoup4','pypdf', 'bs4'],
+        'python': ['requests', 'beautifulsoup4', 'pypdf'],
     },
     'installable': True,
     'application': True, # Set to True if it's a main application

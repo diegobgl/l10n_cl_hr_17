@@ -135,8 +135,10 @@ class HrEmployee(models.Model):
     @staticmethod
     def rut_format(rut):
         """Aplica formato chileno: 12345678K -> 12.345.678-K"""
+        if not rut:
+            return rut
         rut = rut.replace(".", "").replace("-", "").upper()
-        if not rut[:-1].isdigit() or not rut[-1].isalnum():
+        if len(rut) < 2 or not rut[:-1].isdigit() or not rut[-1].isalnum():
             return rut
         cuerpo = rut[:-1]
         dv = rut[-1]
